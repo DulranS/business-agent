@@ -1,7 +1,7 @@
 JOHN KEELLS HOLDINGS BUSINESS AGENTIC WORKFLOW RESULTS
 Industry: Diversified Conglomerate
 Location: Colombo, Sri Lanka
-Generated: 2025-09-23 02:05:08
+Generated: 2025-09-23 02:14:06
 ======================================================================
 
 📈 EXECUTIVE SUMMARY:
@@ -13,11 +13,11 @@ Generated: 2025-09-23 02:05:08
 ======================================================================
 
 📋 [1] BUSINESS TASK: DOCUMENT ANALYSIS
-    🆔 Task ID: doc_analysis_contract_review_1758573288
+    🆔 Task ID: doc_analysis_contract_review_1758573808
     ✅ Status: COMPLETED
     🤖 Processed by: John Keells Holdings_DocumentAnalysisAgent
-    ⏱️  Processing Time: 6.5 seconds
-    🕒 Completed: 02:04:55
+    ⏱️  Processing Time: 11.1 seconds
+    🕒 Completed: 02:13:39
 
     🧠 RAG Knowledge Used: ✅ Yes
     📚 Knowledge Sources: john_keells_holdings_policies.txt, john_keells_holdings_faq.txt, john_keells_holdings_business_units.txt
@@ -28,28 +28,12 @@ Generated: 2025-09-23 02:05:08
 
 ------------------------------------------------------------
 
-📋 [2] BUSINESS TASK: DATA ANALYSIS
-    🆔 Task ID: data_analysis_trends_1758573288
-    ✅ Status: COMPLETED
-    🤖 Processed by: John Keells Holdings_DataProcessingAgent
-    ⏱️  Processing Time: 11.0 seconds
-    🕒 Completed: 02:04:59
-
-    🧠 RAG Knowledge Used: ❌ No
-
-    🔍 KEY BUSINESS INSIGHTS:
-      💼 Analysis Status: completed_with_parsing_error
-      📊 Data Points Analyzed: 5
-      💼 Summary: Data analysis completed for John Keells Holdings
-
-------------------------------------------------------------
-
-📋 [3] BUSINESS TASK: DECISION ANALYSIS
-    🆔 Task ID: decision_support_1758573288
+📋 [2] BUSINESS TASK: DECISION ANALYSIS
+    🆔 Task ID: decision_support_1758573808
     ✅ Status: COMPLETED
     🤖 Processed by: John Keells Holdings_DecisionSupportAgent
-    ⏱️  Processing Time: 15.3 seconds
-    🕒 Completed: 02:05:03
+    ⏱️  Processing Time: 20.0 seconds
+    🕒 Completed: 02:13:48
 
     🧠 RAG Knowledge Used: ❌ No
 
@@ -62,12 +46,12 @@ Generated: 2025-09-23 02:05:08
 
 ------------------------------------------------------------
 
-📋 [4] BUSINESS TASK: CUSTOMER INQUIRY
-    🆔 Task ID: customer_service_retail_complaint_1758573288
+📋 [3] BUSINESS TASK: CUSTOMER INQUIRY
+    🆔 Task ID: customer_service_retail_complaint_1758573808
     ✅ Status: COMPLETED
     🤖 Processed by: John Keells Holdings_CustomerServiceAgent
-    ⏱️  Processing Time: 19.7 seconds
-    🕒 Completed: 02:05:08
+    ⏱️  Processing Time: 29.0 seconds
+    🕒 Completed: 02:13:57
 
     🧠 RAG Knowledge Used: ✅ Yes
 
@@ -76,11 +60,27 @@ Generated: 2025-09-23 02:05:08
 
 ------------------------------------------------------------
 
+📋 [4] BUSINESS TASK: DATA ANALYSIS
+    🆔 Task ID: data_analysis_trends_1758573808
+    ✅ Status: COMPLETED
+    🤖 Processed by: John Keells Holdings_DataProcessingAgent
+    ⏱️  Processing Time: 38.3 seconds
+    🕒 Completed: 02:14:06
+
+    🧠 RAG Knowledge Used: ❌ No
+
+    🔍 KEY BUSINESS INSIGHTS:
+      💼 Analysis Status: completed_with_parsing_error
+      📊 Data Points Analyzed: 5
+      💼 Summary: Data analysis completed for John Keells Holdings
+
+------------------------------------------------------------
+
 📊 SYSTEM PERFORMANCE ANALYSIS:
     ✅ Success Rate: 4/4 tasks (100.0%)
     🧠 RAG Enhancement: 2/4 tasks used company knowledge
-    ⚡ Average Processing Time: 13.1s per task
-    🏁 Total Processing Time: 52.6s
+    ⚡ Average Processing Time: 24.6s per task
+    🏁 Total Processing Time: 98.3s
     📚 Knowledge Base: 3 documents loaded
     🤖 AI Model: qwen3:8b
 
