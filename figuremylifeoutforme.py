@@ -8,10 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from datetime import datetime
-import requests
-from concurrent.futures import ThreadPoolExecutor
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -45,8 +42,8 @@ class EntrepreneurProfile:
     work_experience: List[str]
     current_skills: List[str]
     
-    # Financial situation
-    available_capital: float  # in LKR
+    # Financial situation - BE HONEST HERE
+    available_capital: float  # in LKR - ACTUAL money you can lose
     monthly_expenses: float  # personal monthly expenses
     risk_tolerance: str  # conservative/moderate/aggressive
     income_timeline_need: str  # immediate/3-6months/1year+
@@ -62,432 +59,635 @@ class EntrepreneurProfile:
     local_connections: str  # none/few/moderate/strong
     regulatory_comfort: str  # beginner/comfortable/expert
     
+    # BRUTAL REALITY CHECK FIELDS
+    actual_coding_hours_per_day: int  # Be honest
+    months_of_runway_without_income: int  # How long can you survive with no income
+    family_financial_support: bool  # Can family bail you out
+    has_existing_clients: bool  # Do you have ANY paying customers now
+    debt_obligations: float  # Monthly debt payments (loans, etc.)
+    
     def get_context_summary(self) -> str:
         return f"""
 ENTREPRENEUR: {self.name} | {self.location}, Sri Lanka
 BACKGROUND: {self.education_background} | Experience: {', '.join(self.work_experience[:2])}
-CAPITAL: LKR {self.available_capital:,.0f} available | Monthly needs: LKR {self.monthly_expenses:,.0f}
+CAPITAL: LKR {self.available_capital:,.0f} available | Monthly burn: LKR {self.monthly_expenses + self.debt_obligations:,.0f}
+RUNWAY: {self.months_of_runway_without_income} months survival | Family support: {self.family_financial_support}
 TIMELINE: Need income {self.income_timeline_need} | Risk tolerance: {self.risk_tolerance}
-COMMITMENT: {self.time_commitment} | Prefer {self.preferred_work_style} setup
-SKILLS: {', '.join(self.current_skills[:4])}
-INTERESTS: {', '.join(self.industry_interests[:3])}
+COMMITMENT: {self.time_commitment} | Coding capacity: {self.actual_coding_hours_per_day}h/day
+REALITY: Existing clients: {self.has_existing_clients} | Connections: {self.local_connections}
 """
 
 @dataclass 
 class MarketIntelligence:
-    """Current Sri Lankan market conditions and opportunities"""
+    """BRUTALLY REALISTIC Sri Lankan market conditions and opportunities"""
     
     def __init__(self):
         self.economic_context = {
-            "gdp_growth": "2-3% projected for 2024-2025",
-            "inflation_rate": "Declining from peaks, ~15-20%", 
-            "usd_lkr_rate": "300-330 range, stabilizing",
-            "interest_rates": "15-25% for business loans",
-            "key_challenges": ["High capital costs", "Power supply", "Skilled labor gaps"],
-            "key_opportunities": ["Digital services boom", "Tourism recovery", "Export incentives"]
+            "gdp_growth": "1.5-2.5% actual (optimistic projections ignore reality)",
+            "inflation_impact": "Real purchasing power down 25-40% since 2022", 
+            "usd_lkr_volatility": "300-350 range, but can spike to 400+ anytime",
+            "business_loan_reality": "20-30% interest rates, 6-12 month approval process",
+            "market_size_reality": "Most 'billion rupee markets' are actually 100-500M accessible",
+            "customer_payment_reality": "B2B customers take 60-180 days to pay, many default"
         }
         
-        self.sector_data = {
+        self.sector_brutal_reality = {
             "technology": {
-                "market_size": "LKR 75+ billion and growing rapidly",
-                "entry_barrier": "Low capital, high skill requirement",
-                "avg_startup_cost": "LKR 300K - 3M",
-                "revenue_potential": "LKR 500K - 25M annually",
-                "success_rate": "High with technical skills",
-                "key_opportunities": [
-                    "FinTech apps for Sri Lankan market (digital wallets, investment platforms)",
-                    "Import/Export management software for SMEs", 
-                    "Cryptocurrency trading bots and analytics platforms",
-                    "Stock analysis and portfolio management tools",
-                    "Supply chain management systems for traders",
-                    "Automated loan processing and credit scoring systems",
-                    "E-commerce platforms with integrated payment solutions",
-                    "Blockchain solutions for trade finance"
+                "market_reality": "LKR 20-30B actual addressable (not 75B claimed)",
+                "entry_barrier": "EXTREMELY HIGH - saturated with failed startups",
+                "actual_startup_cost": "LKR 2M - 8M (hidden costs kill most businesses)",
+                "realistic_revenue": "85% make less than LKR 2M annually, 50% fail in 2 years",
+                "success_rate": "Less than 10% achieve sustainable profitability",
+                "brutal_truths": [
+                    "Most 'tech' businesses are just glorified service providers",
+                    "Government contracts take 2+ years and require connections",
+                    "Export market requires 5+ years to establish credibility",
+                    "Local businesses won't pay premium for tech solutions",
+                    "You're competing with Indian/Philippines developers at 1/10th cost"
+                ],
+"realistic_opportunities": [
+                    "Specialized consulting in your exact area of expertise",
+                    "Maintenance services for existing systems/businesses",
+                    "Training and education services (if you're genuinely expert)"
+                ],
+                "critical_suppliers_people": {
+                    "essential_team": [
+                        "Part-time assistant for admin work (LKR 25K-40K/month) - Your time too valuable for admin",
+                        "Freelance graphic designer for proposals/presentations (LKR 15K-30K per project)",
+                        "Accountant for tax and compliance (LKR 10K-25K/month)"
+                    ],
+                    "key_suppliers": [
+                        "Professional website developer (LKR 150K-400K one-time)",
+                        "Digital marketing services (LKR 50K-150K/month)", 
+                        "Professional liability insurance (LKR 50K-150K annually)",
+                        "Office space or co-working membership (LKR 15K-60K/month)",
+                        "Laptop, software, and tech tools (LKR 300K-800K initial setup)"
+                    ],
+                    "critical_relationships": [
+                        "Industry association members - Source of referrals and credibility",
+                        "Complementary service providers - Web designers, lawyers, etc. for referral exchange", 
+                        "Former colleagues/classmates - First source of potential clients",
+                        "Senior professionals in your field - Mentors and potential referral sources",
+                        "Business networking groups - BNI, Rotary, Chamber of Commerce membership"
+                    ],
+                    "brutal_reality": "Services businesses live or die on your personal reputation and network. No network = no clients = no business."
+                },
+                "failure_reasons": [
+                    "Building solutions nobody wants to pay for",
+                    "Underestimating sales cycle (6-18 months typical)",
+                    "Burning through capital on 'MVP development'",
+                    "Competing on features instead of solving real pain"
                 ]
             },
             "fintech_trading": {
-                "market_size": "LKR 200+ billion financial services market",
-                "entry_barrier": "Medium capital, regulatory compliance needed",
-                "avg_startup_cost": "LKR 2M - 15M",
-                "revenue_potential": "LKR 2M - 100M annually",
-                "success_rate": "High with tech + finance skills",
-                "key_opportunities": [
-                    "Robo-advisory platform for Sri Lankan investors",
-                    "Cryptocurrency exchange with LKR integration",
-                    "P2P lending platform for SMEs",
-                    "Algorithmic trading systems for CSE",
-                    "Investment research and analysis platform",
-                    "Digital loan brokerage connecting borrowers to lenders",
-                    "Portfolio management app for retail investors",
-                    "Trade finance platform for import/export businesses"
+                "market_reality": "Highly regulated, dominated by established players",
+                "entry_barrier": "MASSIVE - regulatory compliance costs LKR 10M+ before you start",
+                "actual_startup_cost": "LKR 20M - 50M minimum (licensing, compliance, security)",
+                "realistic_revenue": "99% of fintech startups fail due to regulatory/capital requirements",
+                "success_rate": "Less than 1% - this is venture capital territory",
+                "brutal_truths": [
+                    "CBSL approval takes 2-3 years and requires proven track record",
+                    "Established banks will crush any threat to their business",
+                    "Customer acquisition cost is 10x higher than projections",
+                    "Fraud and security breaches will kill you instantly",
+                    "Need LKR 100M+ in capital reserves for serious fintech"
+                ],
+                "realistic_opportunities": [
+                    "Financial education/consulting services (service, not tech)",
+                    "Investment research for existing wealth managers",
+                    "Back-office software for existing financial firms"
+                ],
+                "critical_suppliers_people": {
+                    "essential_team": [
+                        "Compliance officer with CBSL experience (LKR 200K-400K/month) - MANDATORY",
+                        "Financial lawyer specializing in fintech (LKR 100K-300K per legal opinion)",
+                        "Senior software architect with banking experience (LKR 300K-500K/month)",
+                        "Cybersecurity specialist (LKR 150K-250K/month) - Cannot compromise on security"
+                    ],
+                    "key_suppliers": [
+                        "Legal firm for regulatory compliance - LKR 500K-2M for initial setup",
+                        "Cybersecurity audit firm - LKR 300K-800K per audit (quarterly required)",
+                        "Banking partner for payment processing - Revenue sharing 1-3%",
+                        "Cloud infrastructure (enterprise grade) - LKR 200K-800K/month",
+                        "Insurance (Professional indemnity, cyber) - LKR 100K-500K annually"
+                    ],
+                    "critical_relationships": [
+                        "CBSL officials - Required for any payment system approval",
+                        "Banking sector executives - 2-3 year relationship building needed",
+                        "Existing financial institutions - Will be competitors AND potential partners",
+                        "Government officials in finance ministry - Policy changes affect everything"
+                    ],
+                    "brutal_reality": "You need LKR 50M+ and 2-3 years BEFORE getting regulatory approval. Most fintech 'startups' are just consultancies pretending to be tech companies."
+                },
+                "failure_reasons": [
+                    "Underestimating regulatory complexity",
+                    "Insufficient capital for compliance requirements",
+                    "Naive about customer acquisition costs",
+                    "Ignoring established player advantages"
                 ]
             },
             "import_export_tech": {
-                "market_size": "LKR 3+ trillion import/export market",
-                "entry_barrier": "Medium capital, licensing requirements",
-                "avg_startup_cost": "LKR 5M - 30M",
-                "revenue_potential": "LKR 10M - 200M annually",
-                "success_rate": "Medium-High with proper market research",
-                "key_opportunities": [
-                    "Tech-enabled import business (electronics, components)",
-                    "Software-as-a-Service for import/export documentation",
-                    "Digital marketplace connecting Sri Lankan exporters to global buyers",
-                    "Supply chain financing platform for traders",
-                    "Logistics optimization software with IoT integration",
-                    "Customs clearance automation system",
-                    "Trade compliance and regulatory software",
-                    "Import/export analytics and market intelligence platform"
+                "market_reality": "Traditional industry resistant to change, relationship-driven",
+                "entry_barrier": "HIGH - requires deep industry knowledge + capital",
+                "actual_startup_cost": "LKR 15M - 40M (licensing, inventory, working capital)",
+                "realistic_revenue": "70% struggle with cash flow, 40% fail due to payment delays",
+                "success_rate": "30% if you have industry experience, 5% if you don't",
+                "brutal_truths": [
+                    "Customers won't pay for software - they want cheap services",
+                    "Import licenses require established business and connections",
+                    "Currency fluctuations can wipe out 6 months profit overnight",
+                    "Customs and regulatory changes happen with zero notice",
+                    "Established players have 20+ year relationships"
+                ],
+                "realistic_opportunities": [
+                    "Become an agent for existing importers (learn the business first)",
+                    "Customs clearance services (if you understand regulations)",
+                    "Specialized product sourcing for specific industries"
+                ],
+                "critical_suppliers_people": {
+                    "essential_team": [
+                        "Customs clearance agent with 10+ years experience (LKR 80K-150K/month)",
+                        "Logistics coordinator (LKR 60K-100K/month)",
+                        "Inventory manager (LKR 50K-80K/month)",
+                        "Documentation specialist familiar with trade regulations (LKR 40K-70K/month)"
+                    ],
+                    "key_suppliers": [
+                        "Freight forwarders - 2-3 reliable partners essential (rates vary by volume)",
+                        "Customs clearance firms - LKR 15K-50K per shipment",
+                        "Warehouse facilities - LKR 200-800 per sq ft monthly",
+                        "Insurance providers for cargo - 0.1-0.5% of shipment value",
+                        "Banking partners for Letters of Credit - Fees 0.25-2% of transaction value",
+                        "Quality inspection services - LKR 25K-100K per inspection"
+                    ],
+                    "critical_relationships": [
+                        "Overseas suppliers - 2-3 year relationship building required for credit terms",
+                        "Customs officials - Good relationships prevent delays and issues",
+                        "Bank trade finance managers - Essential for LC and financing",
+                        "Industry association members - Access to market intelligence",
+                        "Existing importers - Can become mentors or competitors"
+                    ],
+                    "brutal_reality": "Import/export is 90% relationships and cash flow management, 10% technology. You need LKR 10M+ working capital just for your first few shipments."
+                },
+                "failure_reasons": [
+                    "Underestimating relationship requirements",
+                    "Insufficient working capital for inventory",
+                    "Currency risk management failures",
+                    "Regulatory compliance violations"
                 ]
             },
             "services": {
-                "market_size": "LKR 2+ trillion service economy",
-                "entry_barrier": "Low capital, relationship-dependent",
-                "avg_startup_cost": "LKR 200K - 2M",
-                "revenue_potential": "LKR 1M - 15M annually", 
-                "success_rate": "High with specialization",
-                "key_opportunities": [
-                    "Financial advisory services for young professionals",
-                    "Investment portfolio management for HNIs",
-                    "Trading consultancy for financial firms",
-                    "Digital transformation consulting for traditional businesses",
-                    "Cryptocurrency education and advisory services",
-                    "Import/export consulting with tech solutions",
-                    "Custom Trading for trading firms",
-                    "Business intelligence and analytics consulting"
+                "market_reality": "LKR 500B actual addressable, extremely fragmented",
+                "entry_barrier": "LOW capital, but HIGH competition and price pressure",
+                "actual_startup_cost": "LKR 200K - 1M (but income is uncertain)",
+                "realistic_revenue": "50% make less than minimum wage equivalent", 
+                "success_rate": "60% survival, but 80% struggle financially",
+                "brutal_truths": [
+                    "Race to the bottom on pricing - customers want cheapest option",
+                    "Payment delays are standard - expect 90+ days",
+                    "No scalability - your time = your income forever",
+                    "Economic downturns kill discretionary service spending first",
+                    "Need 3-5 years to build sustainable client base"
+                ],
+                "realistic_opportunities": [
+                    "Specialized consulting in your exact area of expertise",
+                    "Maintenance services for existing systems/businesses",
+                    "Training and education services (if you're genuinely expert)"
+                ],
+                "failure_reasons": [
+                    "Competing on price instead of value",
+                    "Taking on clients who can't/won't pay",
+                    "No systems for scaling beyond personal time",
+                    "Underestimating business development time"
                 ]
             },
             "food_beverage": {
-                "market_size": "LKR 1.2+ trillion domestic market",
-                "entry_barrier": "Moderate capital, food safety compliance",
-                "avg_startup_cost": "LKR 2M - 20M",
-                "revenue_potential": "LKR 5M - 100M annually",
-                "success_rate": "Medium with differentiation",
-                "key_opportunities": [
-                    "Tech-enabled food delivery platform",
-                    "Smart vending machine business with cashless payments",
-                    "Food import business with tech optimization",
-                    "Restaurant management software solutions",
-                    "Healthy snack manufacturing with e-commerce",
-                    "Food truck business with mobile app integration"
-                ]
-            },
-            "manufacturing": {
-                "market_size": "LKR 1.8+ trillion with export potential",
-                "entry_barrier": "High capital, regulatory compliance",
-                "avg_startup_cost": "LKR 10M - 100M",
-                "revenue_potential": "LKR 20M - 500M annually",
-                "success_rate": "Medium, requires expertise",
-                "key_opportunities": [
-                    "Electronics assembly with import component optimization",
-                    "Software-hardware integration products for export",
-                    "IoT devices for smart home/office markets",
-                    "3D printing services for rapid prototyping",
-                    "Tech accessories manufacturing for export"
-                ]
-            },
-            "tourism": {
-                "market_size": "LKR 600+ billion (recovering from crisis)",
-                "entry_barrier": "Moderate capital, location-dependent", 
-                "avg_startup_cost": "LKR 3M - 25M",
-                "revenue_potential": "LKR 2M - 50M annually",
-                "success_rate": "High with unique positioning",
-                "key_opportunities": [
-                    "Tourism booking platform with AI recommendations",
-                    "Digital tour guide app with AR features",
-                    "Crypto-friendly accommodation booking",
-                    "Travel fintech solutions for tourists"
+                "market_reality": "Saturated market, thin margins, high failure rate",
+                "entry_barrier": "MODERATE capital, but extremely competitive",
+                "actual_startup_cost": "LKR 3M - 15M (hidden costs in compliance/equipment)",
+                "realistic_revenue": "60% fail in first 2 years, margins under 10%",
+                "success_rate": "25% achieve profitability, fewer scale significantly",
+                "brutal_truths": [
+                    "Food safety compliance costs more than projected",
+                    "Inventory spoilage will kill your margins",
+                    "Customer loyalty is non-existent - they buy cheapest",
+                    "Seasonal demand fluctuations create cash flow hell",
+                    "Distribution costs eat 30-50% of margins"
+                ],
+                "realistic_opportunities": [
+                    "Specific niche with premium pricing (if you can defend it)",
+                    "B2B supply to established restaurants/hotels",
+                    "Catering services for corporate events"
+                ],
+                "critical_suppliers_people": {
+                    "essential_team": [
+                        "Food safety certified manager (LKR 60K-100K/month) - LEGALLY REQUIRED",
+                        "Production workers (LKR 35K-50K/month each) - Need 2-3 minimum",
+                        "Sales person with hotel/restaurant connections (LKR 50K + commission)",
+                        "Delivery driver with own vehicle (LKR 40K-60K/month)"
+                    ],
+                    "key_suppliers": [
+                        "Raw material suppliers - 2-3 reliable sources essential for price/quality",
+                        "Packaging suppliers - LKR 50K-200K monthly depending on volume",
+                        "Equipment suppliers/maintenance - LKR 100K-500K initial, LKR 25K monthly maintenance",
+                        "Cold storage facility - LKR 100K-400K monthly depending on size",
+                        "Food safety certification body - LKR 100K-300K annually",
+                        "Transportation/logistics - LKR 80K-200K monthly for distribution"
+                    ],
+                    "critical_relationships": [
+                        "Hotel/restaurant procurement managers - 6-12 month relationship building",
+                        "Supermarket chain buyers - Extremely difficult to access, need intermediaries",
+                        "Food safety inspectors - Good relationship prevents shutdowns",
+                        "Raw material suppliers - Credit terms crucial for cash flow",
+                        "Distributors/wholesalers - Essential for market reach beyond direct sales"
+                    ],
+                    "brutal_reality": "Food business margins are 5-15% maximum. One food safety violation can destroy years of work. Inventory spoilage will kill you."
+                },
+                "failure_reasons": [
+                    "Underestimating food safety and compliance costs",
+                    "Poor inventory management and spoilage control",
+                    "Competing on price in commoditized market",
+                    "Insufficient capital for marketing and distribution"
                 ]
             }
         }
         
-        self.regional_advantages = {
+        self.regional_brutal_reality = {
             "Colombo": {
-                "advantages": ["Largest market", "Best infrastructure", "International connections"],
-                "challenges": ["High competition", "Expensive real estate", "Traffic congestion"],
-                "best_for": ["Tech startups", "Financial services", "Import/export", "Corporate services"]
+                "advantages": ["Only real market for B2B services", "Infrastructure exists"],
+                "brutal_reality": [
+                    "Rent costs will eat 40-60% of early revenue",
+                    "Competition is intense - 50+ similar businesses in every sector",
+                    "Customer acquisition costs 5x higher than other cities",
+                    "Traffic/logistics add 2-3 hours daily to any business requiring movement"
+                ],
+                "who_survives": "Businesses with strong differentiation and premium pricing"
             },
             "Kandy": {
-                "advantages": ["Tourism hub", "Cultural heritage", "Lower costs", "Educational institutions"],
-                "challenges": ["Smaller market", "Limited infrastructure", "Seasonal tourism"],
-                "best_for": ["Tourism services", "Education", "Handicrafts", "Wellness services"]
-            },
-            "Galle": {
-                "advantages": ["Beach tourism", "Port access", "Growing expat community"],
-                "challenges": ["Seasonal business", "Limited local market", "Infrastructure gaps"],
-                "best_for": ["Tourism", "Hospitality", "Water sports", "Seafood processing"]
+                "advantages": ["Lower costs", "Less competition"],
+                "brutal_reality": [
+                    "Market size 1/10th of Colombo - max LKR 2M annual revenue",
+                    "Customers expect Colombo prices but can't pay them",
+                    "Seasonal tourism = 6 months good, 6 months struggling",
+                    "Limited pool of skilled employees"
+                ],
+                "who_survives": "Ultra-lean operations serving local market needs"
             },
             "Other_Cities": {
-                "advantages": ["Lower costs", "Less competition", "Government incentives"],
-                "challenges": ["Limited market size", "Infrastructure constraints", "Talent shortage"],
-                "best_for": ["Agriculture value-add", "Manufacturing", "Regional services"]
+                "advantages": ["Very low costs"],
+                "brutal_reality": [
+                    "Market size insufficient for most tech/service businesses",
+                    "Customer sophistication very low",
+                    "Payment capacity severely limited",
+                    "Brain drain - talented people leave for Colombo"
+                ],
+                "who_survives": "Traditional businesses serving basic local needs"
             }
         }
 
-class OpportunityAnalyzer:
-    """Analyzes business opportunities with Sri Lankan context"""
+class BrutalOpportunityAnalyzer:
+    """Analyzes opportunities with ZERO sugar-coating"""
     
     def __init__(self, market_intel: MarketIntelligence):
         self.market_intel = market_intel
         
-    def analyze_fit(self, profile: EntrepreneurProfile, sector: str) -> Dict[str, Any]:
-        """Analyze how well a sector fits the entrepreneur's profile"""
+    def calculate_monthly_dependency_costs(self, sector: str) -> Dict[str, Any]:
+        """Calculate brutal reality of monthly costs for people and suppliers"""
         
-        if sector not in self.market_intel.sector_data:
+        if sector not in self.market_intel.sector_brutal_reality:
+            return {"error": "Sector not found"}
+            
+        sector_info = self.market_intel.sector_brutal_reality[sector]
+        suppliers_data = sector_info.get("critical_suppliers_people", {})
+        
+        if not suppliers_data:
+            return {"total_monthly_cost": 0, "breakdown": {}}
+        
+        # Extract costs from team descriptions
+        team_costs = []
+        for person in suppliers_data.get('essential_team', []):
+            # Extract cost range from strings like "(LKR 150K-300K/month)"
+            import re
+            cost_match = re.search(r'LKR\s+(\d+)K(?:-(\d+)K)?/month', person)
+            if cost_match:
+                min_cost = int(cost_match.group(1)) * 1000
+                max_cost = int(cost_match.group(2)) * 1000 if cost_match.group(2) else min_cost
+                avg_cost = (min_cost + max_cost) / 2
+                team_costs.append(avg_cost)
+        
+        # Extract supplier costs
+        supplier_costs = []
+        for supplier in suppliers_data.get('key_suppliers', []):
+            cost_match = re.search(r'LKR\s+(\d+)K(?:-(\d+)K)?/month', supplier)
+            if cost_match:
+                min_cost = int(cost_match.group(1)) * 1000
+                max_cost = int(cost_match.group(2)) * 1000 if cost_match.group(2) else min_cost
+                avg_cost = (min_cost + max_cost) / 2
+                supplier_costs.append(avg_cost)
+        
+        total_team_cost = sum(team_costs)
+        total_supplier_cost = sum(supplier_costs)
+        total_monthly_cost = total_team_cost + total_supplier_cost
+        
+        return {
+            "total_monthly_cost": total_monthly_cost,
+            "breakdown": {
+                "team_costs": total_team_cost,
+                "supplier_costs": total_supplier_cost,
+                "team_count": len(team_costs),
+                "supplier_count": len(supplier_costs)
+            },
+            "reality_check": f"You need LKR {total_monthly_cost:,.0f}/month BEFORE generating any revenue"
+        }
+    
+    def analyze_brutal_fit(self, profile: EntrepreneurProfile, sector: str) -> Dict[str, Any]:
+        """BRUTALLY HONEST analysis of sector fit"""
+        
+        if sector not in self.market_intel.sector_brutal_reality:
             return {"error": f"Sector {sector} not in database"}
             
-        sector_info = self.market_intel.sector_data[sector]
-        regional_info = self.market_intel.regional_advantages.get(profile.location, 
-                                                                self.market_intel.regional_advantages["Other_Cities"])
+        sector_info = self.market_intel.sector_brutal_reality[sector]
         
-        # Calculate fit scores
-        capital_fit = self._calculate_capital_fit(profile.available_capital, sector_info)
-        timeline_fit = self._calculate_timeline_fit(profile.income_timeline_need, sector)
-        skill_fit = self._calculate_skill_fit(profile.current_skills, sector)
-        location_fit = self._calculate_location_fit(sector, regional_info)
-        risk_fit = self._calculate_risk_fit(profile.risk_tolerance, sector_info)
-        
-        overall_fit = (capital_fit + timeline_fit + skill_fit + location_fit + risk_fit) / 5
+        # BRUTAL reality checks
+        capital_reality = self._brutal_capital_assessment(profile, sector_info)
+        timeline_reality = self._brutal_timeline_assessment(profile, sector)
+        skill_reality = self._brutal_skill_assessment(profile, sector)
+        market_reality = self._brutal_market_assessment(profile, sector_info)
+        survival_probability = self._calculate_survival_probability(profile, sector_info)
         
         return {
             "sector": sector,
-            "overall_fit_score": round(overall_fit, 1),
-            "fit_analysis": {
-                "capital_fit": {"score": capital_fit, "reasoning": self._get_capital_reasoning(profile.available_capital, sector_info)},
-                "timeline_fit": {"score": timeline_fit, "reasoning": self._get_timeline_reasoning(profile.income_timeline_need, sector)},
-                "skill_fit": {"score": skill_fit, "reasoning": self._get_skill_reasoning(profile.current_skills, sector)},
-                "location_fit": {"score": location_fit, "reasoning": self._get_location_reasoning(sector, regional_info)},
-                "risk_fit": {"score": risk_fit, "reasoning": self._get_risk_reasoning(profile.risk_tolerance, sector)}
+            "survival_probability": survival_probability,
+            "brutal_assessment": {
+                "capital_reality": capital_reality,
+                "timeline_reality": timeline_reality,
+                "skill_reality": skill_reality,
+                "market_reality": market_reality
             },
-            "top_opportunities": sector_info["key_opportunities"][:3],
-            "realistic_projections": {
-                "startup_investment": sector_info["avg_startup_cost"],
-                "revenue_potential": sector_info["revenue_potential"],
-                "market_size": sector_info["market_size"]
-            },
-            "next_steps": self._generate_next_steps(sector, profile),
-            "specific_recommendations": self._generate_recommendations(sector, profile, overall_fit)
+            "realistic_outcomes": self._get_realistic_outcomes(sector_info),
+            "failure_modes": sector_info["failure_reasons"],
+            "hard_truths": sector_info["brutal_truths"],
+            "actionable_alternatives": sector_info["realistic_opportunities"],
+            "critical_suppliers_people": sector_info.get("critical_suppliers_people", {}),
+            "honest_recommendation": self._generate_brutal_recommendation(profile, sector_info, survival_probability)
         }
     
-    def _calculate_capital_fit(self, available_capital: float, sector_info: Dict) -> float:
-        """Calculate how well available capital fits sector requirements"""
-        cost_range = sector_info["avg_startup_cost"]
-        # Extract minimum cost from range string like "LKR 500K - 5M"
-        if "500K" in cost_range:
-            min_cost = 500000
-        elif "2M" in cost_range:
-            min_cost = 2000000  
-        elif "200K" in cost_range:
-            min_cost = 200000
-        elif "10M" in cost_range:
-            min_cost = 10000000
-        elif "5M" in cost_range:
-            min_cost = 5000000
+    def _brutal_capital_assessment(self, profile: EntrepreneurProfile, sector_info: Dict) -> Dict[str, Any]:
+        """Brutal assessment of capital adequacy"""
+        min_cost_str = sector_info["actual_startup_cost"]
+        
+        # Extract minimum realistic cost
+        if "20M" in min_cost_str:
+            min_realistic = 20000000
+        elif "15M" in min_cost_str:
+            min_realistic = 15000000
+        elif "3M" in min_cost_str:
+            min_realistic = 3000000
+        elif "2M" in min_cost_str:
+            min_realistic = 2000000
         else:
-            min_cost = 1000000  # default
+            min_realistic = 1000000
             
-        if available_capital >= min_cost * 2:
-            return 9.0
-        elif available_capital >= min_cost * 1.5:
-            return 7.5
-        elif available_capital >= min_cost:
-            return 6.0
-        elif available_capital >= min_cost * 0.7:
-            return 4.0
+        monthly_burn = profile.monthly_expenses + profile.debt_obligations
+        
+        if profile.available_capital < min_realistic * 0.5:
+            verdict = "COMPLETELY INADEQUATE"
+            reasoning = f"You need minimum LKR {min_realistic/1000000:.1f}M, you have {profile.available_capital/1000000:.1f}M"
+        elif profile.available_capital < min_realistic:
+            verdict = "DANGEROUSLY LOW" 
+            reasoning = f"50% undercapitalized. Will likely run out of money during setup phase"
+        elif profile.available_capital < min_realistic * 1.5:
+            verdict = "RISKY"
+            reasoning = f"No buffer for unexpected costs or revenue delays"
         else:
-            return 2.0
-    
-    def _calculate_timeline_fit(self, income_need: str, sector: str) -> float:
-        """Calculate how well sector fits income timeline needs"""
-        quick_income_sectors = ["services", "technology"]
-        medium_income_sectors = ["food_beverage", "tourism"] 
-        slow_income_sectors = ["manufacturing"]
-        
-        if income_need == "immediate":
-            if sector in quick_income_sectors:
-                return 8.0
-            elif sector in medium_income_sectors:
-                return 5.0
-            else:
-                return 2.0
-        elif income_need == "3-6months":
-            if sector in quick_income_sectors:
-                return 9.0
-            elif sector in medium_income_sectors:
-                return 7.0
-            else:
-                return 4.0
-        else:  # 1year+
-            return 8.0  # All sectors work with longer timeline
-    
-    def _calculate_skill_fit(self, skills: List[str], sector: str) -> float:
-        """Calculate skill alignment with sector needs"""
-        tech_skills = ["programming", "digital marketing", "web design", "data analysis", "software"]
-        business_skills = ["marketing", "sales", "management", "finance", "customer service"]
-        creative_skills = ["design", "writing", "photography", "video", "content"]
-        
-        skill_keywords = [skill.lower() for skill in skills]
-        
-        if sector == "technology":
-            tech_match = sum(1 for skill in skill_keywords if any(tech in skill for tech in tech_skills))
-            return min(9.0, 3.0 + tech_match * 2)
-        elif sector == "services":
-            business_match = sum(1 for skill in skill_keywords if any(biz in skill for biz in business_skills))
-            return min(9.0, 4.0 + business_match * 1.5)
-        elif sector in ["food_beverage", "manufacturing"]:
-            return 6.0  # Moderate - can be learned
-        else:
-            return 7.0  # Default moderate fit
-    
-    def _calculate_location_fit(self, sector: str, regional_info: Dict) -> float:
-        """Calculate how well sector fits the location"""
-        if sector in [item.lower() for item in regional_info["best_for"]]:
-            return 9.0
-        else:
-            return 6.0
-    
-    def _calculate_risk_fit(self, risk_tolerance: str, sector_info: Dict) -> float:
-        """Calculate risk alignment"""
-        success_rate = sector_info["success_rate"]
-        
-        if risk_tolerance == "conservative":
-            if "High" in success_rate:
-                return 8.0
-            elif "Medium" in success_rate:
-                return 6.0
-            else:
-                return 3.0
-        elif risk_tolerance == "moderate":
-            return 7.0  # Most sectors work
-        else:  # aggressive
-            return 8.0  # Willing to take risks
-    
-    def _get_capital_reasoning(self, capital: float, sector_info: Dict) -> str:
-        cost_range = sector_info["avg_startup_cost"]
-        return f"Your LKR {capital:,.0f} vs typical {cost_range} needed for this sector"
-    
-    def _get_timeline_reasoning(self, timeline: str, sector: str) -> str:
-        timeline_map = {
-            "technology": "3-6 months to first revenue",
-            "services": "1-3 months to first revenue", 
-            "food_beverage": "4-8 months to establish market",
-            "manufacturing": "6-12 months for setup and sales",
-            "tourism": "6+ months due to seasonality"
+            verdict = "ADEQUATE"
+            reasoning = f"Sufficient capital, but expect to use most of it"
+            
+        return {
+            "verdict": verdict,
+            "reasoning": reasoning,
+            "runway_months": int(profile.available_capital / monthly_burn) if monthly_burn > 0 else "infinite",
+            "reality_check": f"With LKR {monthly_burn:,.0f} monthly burn, your money lasts {int(profile.available_capital / monthly_burn) if monthly_burn > 0 else 'forever'} months without revenue"
         }
-        expected = timeline_map.get(sector, "6+ months typically")
-        return f"Your {timeline} need vs {expected} for {sector}"
     
-    def _get_skill_reasoning(self, skills: List[str], sector: str) -> str:
-        return f"Your skills {skills[:2]} have moderate to good alignment with {sector} requirements"
-    
-    def _get_location_reasoning(self, sector: str, regional_info: Dict) -> str:
-        return f"{sector.title()} sector alignment with your location advantages: {regional_info['advantages'][:2]}"
-    
-    def _get_risk_reasoning(self, risk_tolerance: str, sector: str) -> str:
-        return f"Your {risk_tolerance} risk appetite matches {sector} sector dynamics"
-    
-    def _generate_next_steps(self, sector: str, profile: EntrepreneurProfile) -> List[str]:
-        """Generate specific next steps for this sector"""
-        base_steps = [
-            f"Research top 5 competitors in {sector} in {profile.location}",
-            f"Interview 3 potential customers in {sector}",
-            f"Calculate detailed startup costs for {sector} business",
-            f"Identify key suppliers/partners for {sector} in Sri Lanka"
-        ]
+    def _brutal_timeline_assessment(self, profile: EntrepreneurProfile, sector: str) -> Dict[str, Any]:
+        """Brutal timeline reality check"""
+        realistic_timelines = {
+            "technology": "12-24 months to meaningful revenue",
+            "fintech_trading": "36-48 months (if you survive regulatory process)",
+            "import_export_tech": "18-36 months to establish relationships",
+            "services": "6-18 months if you're good, 24+ months if you're not",
+            "food_beverage": "12-24 months to break even"
+        }
         
-        if sector == "technology":
-            base_steps.extend([
-                "Build a simple MVP or prototype",
-                "Join Colombo tech meetups and SLASSCOM events",
-                "Research government tech incentives (ICTA, etc.)"
-            ])
-        elif sector == "food_beverage":
-            base_steps.extend([
-                "Get food safety certification requirements",
-                "Test recipes with 20+ people for feedback", 
-                "Research export potential and certifications"
-            ])
-        elif sector == "services":
-            base_steps.extend([
-                "Offer free pilot service to 3 businesses",
-                "Create case studies and testimonials",
-                "Develop standardized service packages"
-            ])
-            
-        return base_steps
-    
-    def _generate_recommendations(self, sector: str, profile: EntrepreneurProfile, fit_score: float) -> List[str]:
-        """Generate specific recommendations based on fit analysis"""
-        recommendations = []
+        expected_timeline = realistic_timelines.get(sector, "18-24 months typically")
         
-        if fit_score >= 7.5:
-            recommendations.append(f"Strong fit for {sector} - proceed with detailed planning")
-            recommendations.append("Focus on rapid validation and MVP development")
-        elif fit_score >= 6.0:
-            recommendations.append(f"Good potential in {sector} with some adjustments needed")
-            recommendations.append("Consider partnership to fill skill/resource gaps")
-        else:
-            recommendations.append(f"Consider {sector} only after building more capabilities")
-            recommendations.append("Look for mentor or co-founder with relevant experience")
-        
-        # Add capital-specific recommendations
-        if profile.available_capital < 1000000:  # < 1M LKR
-            recommendations.append("Consider service-based businesses to minimize capital needs")
-            recommendations.append("Explore government SME funding schemes")
-        
-        # Add timeline-specific recommendations  
         if profile.income_timeline_need == "immediate":
-            recommendations.append("Start with consulting/freelance in your skill area")
-            recommendations.append("Use revenue to fund bigger venture later")
+            if sector == "services":
+                verdict = "POSSIBLE BUT UNLIKELY"
+                reasoning = "Services can generate quick income, but building sustainable business takes time"
+            else:
+                verdict = "COMPLETELY UNREALISTIC"
+                reasoning = f"You need immediate income, {sector} takes {expected_timeline}"
+        elif profile.income_timeline_need == "3-6months":
+            verdict = "VERY OPTIMISTIC"
+            reasoning = f"Most {sector} businesses take {expected_timeline}, not 3-6 months"
+        else:
+            verdict = "REALISTIC EXPECTATION"
+            reasoning = f"Timeline matches {expected_timeline} reality"
             
-        return recommendations
+        return {
+            "verdict": verdict,
+            "reasoning": reasoning,
+            "realistic_timeline": expected_timeline,
+            "cash_flow_warning": f"Expect negative cash flow for first {expected_timeline.split('-')[0]} months minimum"
+        }
+    
+    def _brutal_skill_assessment(self, profile: EntrepreneurProfile, sector: str) -> Dict[str, Any]:
+        """Brutal assessment of actual capability"""
+        
+        if sector == "technology":
+            if profile.actual_coding_hours_per_day < 4:
+                verdict = "INSUFFICIENT COMMITMENT"
+                reasoning = "Tech businesses require 8+ hours daily coding/technical work"
+            elif "programming" not in [skill.lower() for skill in profile.current_skills]:
+                verdict = "MISSING CORE SKILLS"
+                reasoning = "No programming skills = not a tech business"
+            else:
+                verdict = "POTENTIALLY ADEQUATE"
+                reasoning = "Has technical skills, but business/sales skills equally important"
+        
+        elif sector == "services":
+            if not profile.has_existing_clients:
+                verdict = "HIGH RISK"
+                reasoning = "No existing clients = starting from zero with long sales cycles"
+            else:
+                verdict = "GOOD FOUNDATION"
+                reasoning = "Existing clients provide validation and initial revenue"
+        
+        else:
+            verdict = "UNCERTAIN"
+            reasoning = f"Sector {sector} requires deep industry knowledge you may lack"
+            
+        return {
+            "verdict": verdict,
+            "reasoning": reasoning,
+            "skill_gaps": self._identify_critical_gaps(profile, sector),
+            "development_time": "6-24 months to acquire missing critical skills"
+        }
+    
+    def _identify_critical_gaps(self, profile: EntrepreneurProfile, sector: str) -> List[str]:
+        """Identify what's actually missing"""
+        gaps = []
+        
+        if sector == "technology":
+            if profile.actual_coding_hours_per_day < 6:
+                gaps.append("Insufficient daily coding practice")
+            if profile.local_connections == "none":
+                gaps.append("No local business network for customer acquisition")
+            if not profile.has_existing_clients:
+                gaps.append("No proven ability to acquire paying customers")
+        
+        if profile.local_connections in ["none", "few"]:
+            gaps.append("Weak local business network - critical for B2B sales")
+            
+        if profile.regulatory_comfort == "beginner":
+            gaps.append("No understanding of business regulations and compliance")
+            
+        return gaps
+    
+    def _brutal_market_assessment(self, profile: EntrepreneurProfile, sector_info: Dict) -> Dict[str, Any]:
+        """Assess market reality"""
+        return {
+            "market_size": sector_info["market_reality"],
+            "competition_level": "INTENSE in all sectors - assume 50+ direct competitors",
+            "customer_behavior": "Sri Lankan customers are extremely price-sensitive and slow to pay",
+            "growth_potential": "Most businesses plateau at 10-20% of founder projections",
+            "economic_sensitivity": "All sectors affected by economic volatility - plan for 30% demand drops"
+        }
+    
+    def _calculate_survival_probability(self, profile: EntrepreneurProfile, sector_info: Dict) -> Dict[str, Any]:
+        """Calculate realistic probability of success"""
 
-class Qwen3RAGPipeline:
-    """
-    Qwen3 8B + RAG pipeline for local inference and retrieval.
-    """
-    def __init__(self, model_path="Qwen/Qwen1.5-8B-Chat", knowledge_base_path="knowledge_base/"):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.float16, device_map="auto")
-        self.knowledge_base_path = knowledge_base_path
-        self.documents = self._load_documents()
+        # Try to extract the first percentage number from the string
+        rate_str = sector_info.get("success_rate", "")
+        match = re.search(r"(\d+)", rate_str)
+        if match:
+            base_success_rate = float(match.group(1)) / 100
+        else:
+            base_success_rate = 0.3  # Default if not found
 
-    def _load_documents(self):
-        docs = []
-        if not os.path.exists(self.knowledge_base_path):
-            return docs
-        for fname in os.listdir(self.knowledge_base_path):
-            if fname.endswith(".txt"):
-                with open(os.path.join(self.knowledge_base_path, fname), "r", encoding="utf-8") as f:
-                    docs.append({"title": fname, "content": f.read()})
-        return docs
-
-    def retrieve(self, query: str, top_k: int = 2) -> List[str]:
-        # Simple keyword search for demonstration; replace with vector search for production
-        results = []
-        for doc in self.documents:
-            if query.lower() in doc["content"].lower():
-                results.append(doc["content"][:500])
-        return results[:top_k]
-
-    def generate(self, prompt: str, context: List[str], max_new_tokens: int = 256) -> str:
-        # Concatenate context and prompt for RAG
-        context_str = "\n\n".join(context)
-        full_prompt = f"Context:\n{context_str}\n\nPrompt:\n{prompt}"
-        inputs = self.tokenizer(full_prompt, return_tensors="pt").to(self.model.device)
-        outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=True, temperature=0.7)
-        return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        # Adjust for profile factors
+        multiplier = 1.0
+        
+        # Capital adequacy
+        if profile.available_capital < 2000000:  # < 2M
+            multiplier *= 0.5
+        elif profile.available_capital > 5000000:  # > 5M
+            multiplier *= 1.5
+            
+        # Experience and connections
+        if profile.local_connections in ["none", "few"]:
+            multiplier *= 0.6
+        elif profile.local_connections == "strong":
+            multiplier *= 1.8
+            
+        # Financial runway
+        if profile.months_of_runway_without_income < 6:
+            multiplier *= 0.3
+        elif profile.months_of_runway_without_income > 12:
+            multiplier *= 1.5
+            
+        # Existing clients
+        if profile.has_existing_clients:
+            multiplier *= 2.0
+            
+        # Family support
+        if profile.family_financial_support:
+            multiplier *= 1.3
+            
+        final_probability = min(base_success_rate * multiplier, 0.95)  # Cap at 95%
+        
+        if final_probability < 0.1:
+            assessment = "EXTREMELY LOW - Reconsider entirely"
+        elif final_probability < 0.3:
+            assessment = "LOW - High risk of failure"
+        elif final_probability < 0.6:
+            assessment = "MODERATE - Significant risk but possible"
+        else:
+            assessment = "REASONABLE - Good chance with proper execution"
+            
+        return {
+            "probability": round(final_probability * 100, 1),
+            "assessment": assessment,
+            "key_factors": self._get_key_success_factors(profile),
+            "biggest_risks": self._get_biggest_risks(profile, sector_info)
+        }
+    
+    def _get_key_success_factors(self, profile: EntrepreneurProfile) -> List[str]:
+        """What actually matters for success"""
+        factors = []
+        
+        if profile.has_existing_clients:
+            factors.append("Existing client base provides revenue foundation")
+        if profile.local_connections == "strong":
+            factors.append("Strong local network enables faster customer acquisition")
+        if profile.family_financial_support:
+            factors.append("Family financial backup reduces pressure")
+        if profile.months_of_runway_without_income > 12:
+            factors.append("Long financial runway allows proper business development")
+        if profile.available_capital > 5000000:
+            factors.append("Adequate capital for proper business setup")
+            
+        return factors or ["No significant advantages identified - success depends on exceptional execution"]
+    
+    def _get_biggest_risks(self, profile: EntrepreneurProfile, sector_info: Dict) -> List[str]:
+        """What will probably kill the business"""
+        risks = []
+        
+        if profile.months_of_runway_without_income < 6:
+            risks.append("Insufficient runway - will run out of money before revenue stabilizes")
+        if profile.local_connections in ["none", "few"]:
+            risks.append("No network for customer acquisition - sales will be extremely difficult")
+        if not profile.has_existing_clients:
+            risks.append("Starting from zero customers - long ramp-up period")
+        if profile.income_timeline_need == "immediate":
+            risks.append("Unrealistic income expectations will force bad decisions")
+        if not profile.family_financial_support and profile.available_capital < 2000000:
+            risks.append("Undercapitalized with no safety net - high stress will impair decision-making")
+            
+        return risks + sector_info["failure_reasons"][:2]
+    
+    def _get_realistic_outcomes(self, sector_info: Dict) -> Dict[str, str]:
+        """What actually happens to businesses in this sector"""
+        return {
+            "best_case": f"Top 10% achieve {sector_info['realistic_revenue']}",
+            "typical_case": "50% struggle to cover expenses, work more hours than employment for less money",
+            "worst_case": "40-60% close within 2 years, lose most invested capital",
+            "reality_check": "Most 'successful' businesses just replace founder's salary with business income"
+        }
+    
+    def _generate_brutal_recommendation(self, profile: EntrepreneurProfile, sector_info: Dict, survival_prob: Dict) -> str:
+        """Generate honest recommendation"""
+        prob = survival_prob["probability"]
+        
+        if prob < 15:
+            return f"DON'T DO IT. {prob}% success chance. Your profile shows multiple critical gaps. Consider employment or skill building first."
+        elif prob < 30:
+            return f"HIGH RISK. {prob}% success chance. Only proceed if you can afford to lose everything and have backup plans."
+        elif prob < 50:
+            return f"RISKY BUT POSSIBLE. {prob}% success chance. Address critical gaps first, start small, keep employment income."
+        elif prob < 70:
+            return f"REASONABLE CHANCE. {prob}% success chance. Good foundation but still significant risk. Proceed with caution."
+        else:
+            return f"GOOD PROSPECTS. {prob}% success chance. Strong foundation for success but still requires excellent execution."
 
 class SMEDiscoveryPlatform:
-    """Main platform for Sri Lankan SME discovery"""
+    """BRUTALLY HONEST platform for Sri Lankan SME discovery"""
 
     def __init__(self):
         self.market_intel = MarketIntelligence()
-        self.analyzer = OpportunityAnalyzer(self.market_intel)
+        self.analyzer = BrutalOpportunityAnalyzer(self.market_intel)
         self.profile: Optional[EntrepreneurProfile] = None
-        self.rag_pipeline = Qwen3RAGPipeline(
-            model_path="Qwen/Qwen1.5-8B-Chat",  # Adjust path if needed
-            knowledge_base_path="knowledge_base/"  # Folder with .txt docs for retrieval
-        )
 
     def set_profile(self, profile: EntrepreneurProfile):
         """Set the entrepreneur profile"""
@@ -495,550 +695,413 @@ class SMEDiscoveryPlatform:
         logger.info(f"Profile set for {profile.name} in {profile.location}")
 
     def discover_opportunities(self) -> Dict[str, Any]:
-        """Main discovery function - analyzes all sectors for the entrepreneur"""
+        """BRUTAL analysis - no sugar-coating"""
         if not self.profile:
             return {"error": "No entrepreneur profile set"}
-
-        # --- Qwen3 8B + RAG ENRICHMENT ---
-        rag_query = (
-            f"Best business opportunities for a {self.profile.age_range} entrepreneur in {self.profile.location} "
-            f"with skills: {', '.join(self.profile.current_skills[:5])} and interests: {', '.join(self.profile.industry_interests[:3])}"
-        )
-        retrieved_contexts = self.rag_pipeline.retrieve(rag_query, top_k=3)
-        rag_prompt = (
-            f"Given the entrepreneur profile:\n{self.profile.get_context_summary()}\n"
-            f"and the Sri Lankan market context, analyze and recommend the most suitable business sectors and paths. "
-            f"Provide sector fit, financial projections, and actionable steps."
-        )
-        rag_llm_output = self.rag_pipeline.generate(rag_prompt, retrieved_contexts, max_new_tokens=350)
 
         results = {
             "entrepreneur": self.profile.name,
             "location": self.profile.location,
             "analysis_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "economic_context": self.market_intel.economic_context,
+            "brutal_reality_check": self._overall_reality_check(),
             "sector_analysis": {},
-            "top_recommendations": [],
-            "immediate_actions": [],
-            "funding_options": self._get_funding_options(),
-            "regulatory_checklist": self._get_regulatory_checklist(),
-            "rag_llm_output": rag_llm_output  # Add RAG LLM output to results
+            "ranked_opportunities": [],
+            "immediate_survival_plan": [],
+            "harsh_truths": self._get_harsh_truths()
         }
 
-        # Analyze each sector
+        # Analyze each sector with brutal honesty
         sector_scores = {}
-        for sector in self.market_intel.sector_data.keys():
-            analysis = self.analyzer.analyze_fit(self.profile, sector)
+        for sector in self.market_intel.sector_brutal_reality.keys():
+            analysis = self.analyzer.analyze_brutal_fit(self.profile, sector)
             results["sector_analysis"][sector] = analysis
-            sector_scores[sector] = analysis["overall_fit_score"]
+            sector_scores[sector] = analysis["survival_probability"]["probability"]
 
-        # Generate top recommendations based on fit scores
+        # Rank by realistic success probability
         sorted_sectors = sorted(sector_scores.items(), key=lambda x: x[1], reverse=True)
 
-        for sector, score in sorted_sectors[:3]:
-            sector_data = self.market_intel.sector_data[sector]
-            results["top_recommendations"].append({
+        for i, (sector, prob) in enumerate(sorted_sectors):
+            results["ranked_opportunities"].append({
+                "rank": i + 1,
                 "sector": sector,
-                "fit_score": score,
-                "why_good_fit": f"Score {score}/10 based on your capital, skills, and timeline",
-                "best_opportunity": sector_data["key_opportunities"][0],
-                "investment_needed": sector_data["avg_startup_cost"],
-                "revenue_potential": sector_data["revenue_potential"]
+                "success_probability": f"{prob}%",
+                "brutal_assessment": results["sector_analysis"][sector]["brutal_assessment"],
+                "recommendation": results["sector_analysis"][sector]["honest_recommendation"],
+                "biggest_risks": results["sector_analysis"][sector]["brutal_assessment"]["market_reality"]
             })
 
-        # Generate immediate actions
-        best_sector = sorted_sectors[0][0]
-        results["immediate_actions"] = [
-            f"Deep dive research on {best_sector} opportunities in {self.profile.location}",
-            "Conduct 5 customer interviews in your top sector",
-            "Calculate exact startup costs for your specific business idea",
-            "Join relevant industry associations and networking groups",
-            "Create a 90-day validation plan",
-            "Identify potential mentors in your chosen sector"
-        ]
+        # Generate survival plan
+        results["immediate_survival_plan"] = self._generate_survival_plan()
 
         return results
 
-    def validate_specific_idea(self, business_idea: str) -> Dict[str, Any]:
-        """Validate a specific business idea"""
-        if not self.profile:
-            return {"error": "No entrepreneur profile set"}
+    def _overall_reality_check(self) -> Dict[str, Any]:
+        """Overall brutal assessment of entrepreneurial readiness"""
         
-        validation = {
-            "business_idea": business_idea,
-            "entrepreneur": self.profile.name,
-            "validation_date": datetime.now().strftime("%Y-%m-%d"),
-            "initial_assessment": self._assess_idea_viability(business_idea),
-            "market_validation_steps": self._generate_validation_steps(business_idea),
-            "financial_reality_check": self._financial_reality_check(business_idea),
-            "competitive_landscape": self._quick_competitive_check(business_idea),
-            "regulatory_requirements": self._check_regulatory_needs(business_idea),
-            "risk_assessment": self._assess_risks(business_idea),
-            "go_no_go_recommendation": self._generate_recommendation(business_idea)
+        financial_health = "POOR"
+        if self.profile.available_capital > 5000000 and self.profile.months_of_runway_without_income > 12:
+            financial_health = "GOOD"
+        elif self.profile.available_capital > 2000000 and self.profile.months_of_runway_without_income > 6:
+            financial_health = "MODERATE"
+            
+        market_readiness = "NOT READY"
+        if self.profile.has_existing_clients and self.profile.local_connections == "strong":
+            market_readiness = "READY"
+        elif self.profile.has_existing_clients or self.profile.local_connections in ["moderate", "strong"]:
+            market_readiness = "PARTIALLY READY"
+            
+        return {
+            "financial_health": financial_health,
+            "market_readiness": market_readiness,
+            "overall_assessment": self._get_overall_assessment(financial_health, market_readiness),
+            "critical_gaps": self._identify_critical_preparation_gaps(),
+            "time_to_readiness": self._estimate_preparation_time()
         }
-        
-        return validation
     
-    def _get_funding_options(self) -> List[Dict[str, str]]:
-        """Get funding options relevant to entrepreneur's situation"""
-        options = []
+    def _get_overall_assessment(self, financial_health: str, market_readiness: str) -> str:
+        """Overall readiness assessment"""
+        if financial_health == "POOR" or market_readiness == "NOT READY":
+            return "NOT READY FOR ENTREPRENEURSHIP - Focus on preparation first"
+        elif financial_health == "MODERATE" and market_readiness == "PARTIALLY READY":
+            return "MARGINAL READINESS - Can start but high risk"
+        else:
+            return "READY TO START - Good foundation for entrepreneurship"
+    
+    def _identify_critical_preparation_gaps(self) -> List[str]:
+        """What needs to be fixed before starting"""
+        gaps = []
         
-        if self.profile.available_capital < 2000000:  # < 2M LKR
-            options.extend([
-                {"source": "SLDB SME Loans", "amount": "Up to LKR 10M", "requirement": "Business plan + collateral"},
-                {"source": "Microfinance", "amount": "LKR 100K - 2M", "requirement": "Basic business plan"},
-                {"source": "Bootstrappa/Angel Networks", "amount": "LKR 1M - 10M", "requirement": "Scalable tech business"}
+        if self.profile.months_of_runway_without_income < 6:
+            gaps.append("Insufficient financial runway - save more or reduce expenses")
+        if not self.profile.has_existing_clients:
+            gaps.append("No existing revenue stream - start freelancing/consulting first")
+        if self.profile.local_connections in ["none", "few"]:
+            gaps.append("Weak professional network - join industry associations, attend events")
+        if self.profile.available_capital < 2000000 and not self.profile.family_financial_support:
+            gaps.append("Undercapitalized with no backup - extremely high risk")
+        if self.profile.regulatory_comfort == "beginner":
+            gaps.append("No business/legal knowledge - take courses or find mentor")
+            
+        return gaps
+    
+    def _estimate_preparation_time(self) -> str:
+        """How long to get ready"""
+        gaps = len(self._identify_critical_preparation_gaps())
+        
+        if gaps == 0:
+            return "Ready now"
+        elif gaps <= 2:
+            return "6-12 months preparation needed"
+        elif gaps <= 4:
+            return "12-24 months preparation needed"
+        else:
+            return "24+ months preparation needed - consider different path"
+    
+    def _get_harsh_truths(self) -> List[str]:
+        """Uncomfortable truths about Sri Lankan entrepreneurship"""
+        return [
+            "90% of businesses fail because founders ignore cash flow reality",
+            "Your 'innovative idea' probably exists - customer acquisition is the real challenge",
+            "Sri Lankan customers will pay 30-50% less than you think and take 3x longer",
+            "Government contracts sound great but take 2+ years and require political connections",
+            "Most 'tech solutions' fail because they solve problems customers don't want to pay to solve",
+            "Your friends and family praising your idea means nothing - only paying customers matter",
+            "Import/export sounds glamorous but it's mostly paperwork, relationships, and cash flow management",
+            "Service businesses don't scale - you're buying yourself a job, not building wealth",
+            "Economic instability in Sri Lanka makes long-term planning nearly impossible"
+        ]
+    
+    def _generate_survival_plan(self) -> List[Dict[str, str]]:
+        """Immediate actions for financial survival while building business"""
+        plan = []
+        
+        if self.profile.income_timeline_need == "immediate":
+            plan.extend([
+                {
+                    "priority": "URGENT",
+                    "action": "Start freelancing/consulting in existing skills TODAY",
+                    "timeline": "This week",
+                    "expected_income": "LKR 50K-200K/month if you're good"
+                },
+                {
+                    "priority": "URGENT", 
+                    "action": "Apply for part-time employment to cover basic expenses",
+                    "timeline": "Next 2 weeks",
+                    "expected_income": "LKR 30K-80K/month guaranteed"
+                }
             ])
         
-        if "technology" in [interest.lower() for interest in self.profile.industry_interests]:
-            options.append({"source": "ICTA Grants", "amount": "Up to LKR 5M", "requirement": "Tech innovation project"})
-        
-        options.extend([
-            {"source": "Personal Network", "amount": "Variable", "requirement": "Trust + clear plan"},
-            {"source": "Revenue-based Financing", "amount": "LKR 2M+", "requirement": "Existing revenue stream"}
+        plan.extend([
+            {
+                "priority": "HIGH",
+                "action": "Build professional network through industry events",
+                "timeline": "Ongoing - 2 events per month minimum",
+                "expected_outcome": "Potential clients and mentors"
+            },
+            {
+                "priority": "HIGH",
+                "action": "Validate business ideas with 20+ potential customers",
+                "timeline": "Next 4 weeks",
+                "expected_outcome": "Real market demand data"
+            },
+            {
+                "priority": "MEDIUM",
+                "action": "Learn business regulations and compliance requirements",
+                "timeline": "Next 2 months",
+                "expected_outcome": "Avoid costly legal mistakes"
+            },
+            {
+                "priority": "LOW",
+                "action": "Build MVP only after customer validation",
+                "timeline": "Month 3-6",
+                "expected_outcome": "Product customers actually want"
+            }
         ])
         
-        return options
-    
-    def _get_regulatory_checklist(self) -> List[str]:
-        """Get regulatory checklist for Sri Lankan businesses"""
-        return [
-            "Company name reservation (Registrar of Companies)",
-            "Business registration (Private Limited/Partnership)",
-            "Tax Identification Number (TIN) registration", 
-            "Municipal/Local Authority business license",
-            "EPF/ETF registration (if hiring employees)",
-            "VAT registration (if turnover > LKR 12M annually)",
-            "Sector-specific licenses (FDA, SLTDA, etc.)",
-            "Environmental clearance (if applicable)",
-            "Import/Export license (if applicable)",
-            "Professional indemnity insurance"
-        ]
-    
-    def _assess_idea_viability(self, idea: str) -> Dict[str, Any]:
-        """Quick viability assessment of business idea"""
-        # This would ideally use NLP to parse the idea, but for now we'll provide general framework
-        return {
-            "market_size_estimate": "To be researched based on your specific idea",
-            "competition_level": "Requires market research",
-            "capital_intensity": "Depends on business model chosen",
-            "regulatory_complexity": "Varies by industry",
-            "scalability_potential": "To be evaluated through customer validation",
-            "preliminary_assessment": "Idea has potential - needs detailed validation"
-        }
-    
-    def _generate_validation_steps(self, idea: str) -> List[Dict[str, str]]:
-        """Generate validation steps for the specific idea"""
-        return [
-            {
-                "step": "Customer Problem Validation",
-                "action": "Interview 20 potential customers about the problem your idea solves",
-                "timeline": "Week 1-2",
-                "cost": "LKR 10,000 (transport, incentives)"
-            },
-            {
-                "step": "Solution Validation", 
-                "action": "Create mockups/prototype and get feedback from 10 customers",
-                "timeline": "Week 3-4",
-                "cost": "LKR 25,000 (design, basic prototype)"
-            },
-            {
-                "step": "Pricing Validation",
-                "action": "Test different pricing models with potential customers", 
-                "timeline": "Week 5-6",
-                "cost": "LKR 5,000 (surveys, incentives)"
-            },
-            {
-                "step": "Market Size Validation",
-                "action": "Research total addressable market in Sri Lanka",
-                "timeline": "Week 7-8", 
-                "cost": "LKR 15,000 (research tools, data)"
-            }
-        ]
-    
-    def _financial_reality_check(self, idea: str) -> Dict[str, str]:
-        """Provide financial reality check framework"""
-        return {
-            "startup_cost_estimate": f"LKR 500K - 5M (varies significantly by business model)",
-            "monthly_operating_costs": f"LKR 100K - 500K (depends on team size, location)",
-            "break_even_timeline": "6-18 months typical for service businesses",
-            "cash_flow_warning": "Plan for 6 months of expenses without revenue",
-            "profitability_factors": "Customer acquisition cost vs lifetime value critical"
-        }
-    
-    def _quick_competitive_check(self, idea: str) -> Dict[str, Any]:
-        """Framework for competitive analysis"""
-        return {
-            "direct_competitors": "List top 3-5 businesses doing exactly what you plan",
-            "indirect_competitors": "Identify how customers currently solve this problem",
-            "competitive_advantages": "What will make you different and better?",
-            "market_gaps": "What are competitors NOT doing well?",
-            "differentiation_strategy": "How will you position vs competitors?"
-        }
-    
-    def _check_regulatory_needs(self, idea: str) -> List[str]:
-        """Check regulatory requirements for business idea"""
-        return [
-            "Basic business registration requirements apply",
-            "Sector-specific licenses may be needed",
-            "Tax obligations (income tax, VAT if applicable)",
-            "Labor law compliance if hiring",
-            "Consumer protection regulations",
-            "Data protection compliance (if handling personal data)",
-            "Environmental regulations (if applicable)",
-            "Import/export regulations (if applicable)"
-        ]
-    
-    def _assess_risks(self, idea: str) -> Dict[str, List[str]]:
-        """Assess business risks"""
-        return {
-            "high_risks": [
-                "Market may not be ready for this solution",
-                "Competition from well-funded players", 
-                "Regulatory changes could impact business"
-            ],
-            "medium_risks": [
-                "Customer acquisition may be slower than expected",
-                "Key team members leaving",
-                "Economic downturn affecting demand"
-            ],
-            "low_risks": [
-                "Technology changes",
-                "Supplier issues",
-                "Seasonal demand fluctuations"
-            ],
-            "mitigation_strategies": [
-                "Start small and test assumptions quickly",
-                "Build strong customer relationships", 
-                "Maintain healthy cash reserves",
-                "Diversify revenue sources over time"
-            ]
-        }
-    
-    def _generate_recommendation(self, idea: str) -> Dict[str, str]:
-        """Generate go/no-go recommendation"""
-        return {
-            "recommendation": "PROCEED WITH VALIDATION", 
-            "confidence": "Medium - requires detailed market research",
-            "reasoning": "Idea shows potential but needs customer validation before significant investment",
-            "next_immediate_action": "Start with customer interviews this week",
-            "investment_recommendation": "Limit initial investment to LKR 100K for validation phase",
-            "timeline_recommendation": "Spend 8-12 weeks on validation before major decisions"
-        }
+        return plan
 
-def create_your_profile() -> EntrepreneurProfile:
+def create_realistic_profile() -> EntrepreneurProfile:
     """
-    Kay Flock's entrepreneurial profile
+    BRUTALLY HONEST profile - fill this with YOUR REAL situation
     """
     
     return EntrepreneurProfile(
-        # PERSONAL INFO
-        name="Kay Flock",
-        location="Colombo",  # Assuming Colombo for best business opportunities
-        age_range="18-25",
-        education_background="Business", 
-        work_experience=["Trading", "Violence Projects", "Pest control Solutions"],
+        # PERSONAL INFO - BE HONEST
+        name="Your Name Here",
+        location="Colombo",  
+        age_range="20-25",
+        education_background="Computer Science/Business/Engineering", 
+        work_experience=["Student projects", "Internships", "Freelance work"],
         current_skills=[
-            "Trading", "Violence", "System Architecture", "Database Design",
-            "Web Development", "Mobile Development", "API Development", "Cloud Computing",
-            "Financial Analysis", "Investment Analysis", "Cryptocurrency Trading", 
-            "Stock Market Analysis", "Portfolio Management", "Risk Assessment"
+            "Python", "Web Development", "Basic Business Knowledge"
         ],
         
-        # FINANCIAL SITUATION - Conservative estimates for 20-year-old
-        available_capital=800000.0,  # LKR 800K - realistic for young professional
-        monthly_expenses=45000.0,     # Conservative monthly expenses
-        risk_tolerance="aggressive",  # Given crypto/stock investment experience
-        income_timeline_need="3-6months",  # Need to build income stream
+        # FINANCIAL REALITY - BE BRUTALLY HONEST
+        available_capital=500000.0,  # LKR 500K - what you can actually LOSE
+        monthly_expenses=35000.0,    # Your real monthly expenses
+        risk_tolerance="moderate",   
+        income_timeline_need="3-6months",  
         
-        # WORK PREFERENCES
+        # WORK REALITY
         time_commitment="full-time",  
-        preferred_work_style="solo",  # Tech-savvy, can work independently
+        preferred_work_style="solo",  
         industry_interests=[
-            "Technology", "Financial Technology", "Import/Export", "Trading",
-            "Investment Services", "Cryptocurrency", "E-commerce", "Digital Services"
+            "Technology", "Services", "Digital Marketing"
         ],
-        deal_breakers=["Heavy physical labor", "Low-tech industries", "Limited growth potential"],
+        deal_breakers=["Physical labor", "Door-to-door sales", "MLM schemes"],
         
         # SRI LANKAN CONTEXT
         language_skills=["English", "Sinhala"],  
-        local_connections="few",  # Young professional, still building network
-        regulatory_comfort="beginner"  # Smart but new to business regulations
+        local_connections="few",  # BE HONEST
+        regulatory_comfort="beginner",  
+        
+        # BRUTAL REALITY FIELDS - BE HONEST HERE
+        actual_coding_hours_per_day=3,  # Hours you ACTUALLY code daily
+        months_of_runway_without_income=12,  # How long can you survive with no income
+        family_financial_support=True,  # Can family help if you fail
+        has_existing_clients=False,  # Do you have ANY paying customers now
+        debt_obligations=0.0  # Monthly debt payments
     )
 
 # Main execution function
 async def main():
     """
-    Sri Lankan SME Business Discovery Platform
-
-    This provides unique value beyond ChatGPT by:
-    1. Current Sri Lankan market data and economic context
-    2. Realistic financial projections in LKR
-    3. Location-specific opportunities and challenges
-    4. Regulatory requirements and compliance checklists
-    5. Funding options specific to Sri Lankan entrepreneurs  
-    6. Personalized fit analysis based on your profile
-    7. Actionable validation steps you can execute locally
-    8. Network connections and local resource mapping
+    BRUTALLY REALISTIC Sri Lankan SME Business Discovery Platform
+    
+    This tells you the UNCOMFORTABLE TRUTH about:
+    1. Your actual chances of success (not fantasy projections)
+    2. Real costs and timelines (not optimistic estimates)  
+    3. What will probably kill your business
+    4. Why most businesses fail in Sri Lanka
+    5. Whether you're actually ready (probably not)
+    6. What you should do instead of chasing unrealistic dreams
     """
 
-    output_lines = []
-
-    output_lines.append("=" * 80)
-    output_lines.append("🇱🇰 SRI LANKAN SME BUSINESS DISCOVERY PLATFORM")
-    output_lines.append("=" * 80)
-    output_lines.append("Find Your Perfect Business Opportunity in Sri Lanka")
-    output_lines.append("Personalized Analysis Based on Your Unique Situation")
+    print("=" * 80)
+    print("🇱🇰 BRUTALLY REALISTIC SRI LANKAN SME DISCOVERY PLATFORM")
+    print("=" * 80)
+    print("UNCOMFORTABLE TRUTHS ABOUT STARTING A BUSINESS IN SRI LANKA")
+    print("No sugar-coating. No false hope. Just brutal reality.")
+    print()
 
     # Initialize the platform
     platform = SMEDiscoveryPlatform()
 
-    # Set up your profile (CUSTOMIZE THIS WITH YOUR DETAILS)
-    your_profile = create_your_profile()
+    # Set up realistic profile (CUSTOMIZE THIS WITH YOUR REAL DETAILS)
+    your_profile = create_realistic_profile()
     platform.set_profile(your_profile)
 
-    output_lines.append(f"\nENTREPRENEUR PROFILE LOADED:")
-    output_lines.append(your_profile.get_context_summary())
+    print("ENTREPRENEUR PROFILE LOADED:")
+    print(your_profile.get_context_summary())
 
-    output_lines.append("\n" + "=" * 60)
-    output_lines.append("🔍 COMPREHENSIVE OPPORTUNITY DISCOVERY")
-    output_lines.append("=" * 60)
+    print("\n" + "=" * 60)
+    print("🔍 BRUTAL OPPORTUNITY ANALYSIS")
+    print("=" * 60)
 
-    # Run comprehensive opportunity discovery
+    # Run brutal analysis
     discovery_results = platform.discover_opportunities()
 
-    # Add Qwen3 8B + RAG LLM output at the top of the report
-    output_lines.append("\n" + "=" * 60)
-    output_lines.append("🤖 QWEN3 8B + RAG LLM RECOMMENDATION")
-    output_lines.append("=" * 60)
-    output_lines.append(discovery_results.get("rag_llm_output", "No LLM output."))
+    # Display brutal reality check
+    print(f"\n💀 OVERALL READINESS ASSESSMENT:")
+    reality = discovery_results["brutal_reality_check"]
+    print(f"   Financial Health: {reality['financial_health']}")
+    print(f"   Market Readiness: {reality['market_readiness']}")
+    print(f"   Overall Assessment: {reality['overall_assessment']}")
+    print(f"   Time to Readiness: {reality['time_to_readiness']}")
 
-    # Display results in an organized way
-    output_lines.append(f"\n📊 ECONOMIC CONTEXT FOR SRI LANKA:")
-    economic = discovery_results["economic_context"]
-    output_lines.append(f"   GDP Growth: {economic['gdp_growth']}")
-    output_lines.append(f"   Inflation: {economic['inflation_rate']}")
-    output_lines.append(f"   USD/LKR: {economic['usd_lkr_rate']}")
-    output_lines.append(f"   Business Loans: {economic['interest_rates']}")
+    if reality["critical_gaps"]:
+        print(f"\n⚠️ CRITICAL GAPS YOU MUST FIX FIRST:")
+        for gap in reality["critical_gaps"]:
+            print(f"   • {gap}")
 
-    output_lines.append(f"\n🎯 YOUR TOP 3 BUSINESS OPPORTUNITIES:")
-    for i, rec in enumerate(discovery_results["top_recommendations"], 1):
-        output_lines.append(f"\n   {i}. {rec['sector'].upper()} SECTOR")
-        output_lines.append(f"      Fit Score: {rec['fit_score']}/10")
-        output_lines.append(f"      Why Good Fit: {rec['why_good_fit']}")
-        output_lines.append(f"      Best Opportunity: {rec['best_opportunity']}")
-        output_lines.append(f"      Investment Needed: {rec['investment_needed']}")
-        output_lines.append(f"      Revenue Potential: {rec['revenue_potential']}")
+    # Display harsh truths
+    print(f"\n💥 HARSH TRUTHS ABOUT SRI LANKAN ENTREPRENEURSHIP:")
+    for truth in discovery_results["harsh_truths"]:
+        print(f"   • {truth}")
 
-    output_lines.append(f"\n📋 YOUR IMMEDIATE ACTION PLAN:")
-    for i, action in enumerate(discovery_results["immediate_actions"], 1):
-        output_lines.append(f"   {i}. {action}")
-
-    output_lines.append(f"\n💰 FUNDING OPTIONS FOR YOU:")
-    for option in discovery_results["funding_options"]:
-        output_lines.append(f"   • {option['source']}: {option['amount']} ({option['requirement']})")
+    # Display ranked opportunities by REALISTIC success probability
+    print(f"\n📊 OPPORTUNITIES RANKED BY REALISTIC SUCCESS PROBABILITY:")
+    for opp in discovery_results["ranked_opportunities"]:
+        print(f"\n   RANK #{opp['rank']}: {opp['sector'].upper()}")
+        print(f"   Success Probability: {opp['success_probability']}")
+        print(f"   Brutal Assessment: {opp['brutal_assessment']['capital_reality']['verdict']}")
+        print(f"   Recommendation: {opp['recommendation']}")
 
     # Detailed sector analysis
-    output_lines.append(f"\n" + "=" * 60)
-    output_lines.append("📈 DETAILED SECTOR ANALYSIS")
-    output_lines.append("=" * 60)
+    print(f"\n" + "=" * 60)
+    print("🏢 DETAILED BRUTAL SECTOR ANALYSIS")
+    print("=" * 60)
 
     for sector, analysis in discovery_results["sector_analysis"].items():
-        if "error" not in analysis:
-            output_lines.append(f"\n🏢 {sector.upper()} SECTOR - Fit Score: {analysis['overall_fit_score']}/10")
-            output_lines.append(f"   💰 Capital Fit: {analysis['fit_analysis']['capital_fit']['score']}/10")
-            output_lines.append(f"      {analysis['fit_analysis']['capital_fit']['reasoning']}")
-            output_lines.append(f"   ⏱️ Timeline Fit: {analysis['fit_analysis']['timeline_fit']['score']}/10")
-            output_lines.append(f"      {analysis['fit_analysis']['timeline_fit']['reasoning']}")
-            output_lines.append(f"   🎯 Top Opportunities in {sector}:")
-            for opp in analysis['top_opportunities']:
-                output_lines.append(f"      • {opp}")
-            output_lines.append(f"   📝 Next Steps for {sector}:")
-            for step in analysis['next_steps'][:3]:
-                output_lines.append(f"      • {step}")
-            output_lines.append(f"   💡 Specific Recommendations:")
-            for rec in analysis['specific_recommendations'][:2]:
-                output_lines.append(f"      • {rec}")
+        print(f"\n💀 {sector.upper()} SECTOR")
+        print(f"   Success Probability: {analysis['survival_probability']['probability']}%")
+        print(f"   Assessment: {analysis['survival_probability']['assessment']}")
+        
+        # Calculate and display dependency costs
+        cost_analysis = platform.analyzer.calculate_monthly_dependency_costs(sector)
+        if cost_analysis.get("total_monthly_cost", 0) > 0:
+            print(f"\n   💰 MONTHLY DEPENDENCY COSTS:")
+            print(f"   Total Monthly Burn: LKR {cost_analysis['total_monthly_cost']:,.0f}")
+            print(f"   Team Costs: LKR {cost_analysis['breakdown']['team_costs']:,.0f} ({cost_analysis['breakdown']['team_count']} people)")
+            print(f"   Supplier Costs: LKR {cost_analysis['breakdown']['supplier_costs']:,.0f} ({cost_analysis['breakdown']['supplier_count']} services)")
+            print(f"   Reality: {cost_analysis['reality_check']}")
+            
+            # Show capital adequacy vs dependency costs
+            monthly_burn = cost_analysis['total_monthly_cost'] + your_profile.monthly_expenses + your_profile.debt_obligations
+            months_runway = your_profile.available_capital / monthly_burn if monthly_burn > 0 else float('inf')
+            print(f"   Your Runway: {months_runway:.1f} months with LKR {your_profile.available_capital:,.0f} capital")
+        
+        print(f"\n   💰 CAPITAL REALITY:")
+        cap = analysis['brutal_assessment']['capital_reality']
+        print(f"   Verdict: {cap['verdict']}")
+        print(f"   Reality: {cap['reality_check']}")
+        
+        print(f"\n   ⏱️ TIMELINE REALITY:")
+        time = analysis['brutal_assessment']['timeline_reality']
+        print(f"   Verdict: {time['verdict']}")
+        print(f"   Reality: {time['cash_flow_warning']}")
+        
+        print(f"\n   💥 HARD TRUTHS:")
+        for truth in analysis['hard_truths'][:3]:
+            print(f"   • {truth}")
+            
+        print(f"\n   💀 WHY YOU'LL PROBABLY FAIL:")
+        for reason in analysis['failure_modes'][:2]:
+            print(f"   • {reason}")
+            
+        print(f"\n   👥 PEOPLE/SUPPLIERS YOU ACTUALLY NEED:")
+        suppliers = analysis.get('critical_suppliers_people', {})
+        if suppliers:
+            print(f"   Essential Team (Monthly Cost):")
+            for person in suppliers.get('essential_team', [])[:3]:
+                print(f"   • {person}")
+            print(f"   Key Suppliers (Monthly Cost):")  
+            for supplier in suppliers.get('key_suppliers', [])[:3]:
+                print(f"   • {supplier}")
+            print(f"   Critical Relationships (Time to Build):")
+            for relationship in suppliers.get('critical_relationships', [])[:2]:
+                print(f"   • {relationship}")
+            if 'brutal_reality' in suppliers:
+                print(f"   Reality Check: {suppliers['brutal_reality']}")
+        
+        print(f"\n   🎯 IF YOU INSIST ON TRYING:")
+        for alt in analysis['actionable_alternatives'][:2]:
+            print(f"   • {alt}")
 
-    # Business idea validation example
-    output_lines.append(f"\n" + "=" * 60)
-    output_lines.append("🧪 BUSINESS IDEA VALIDATION EXAMPLE")
-    output_lines.append("=" * 60)
+    # Survival plan
+    print(f"\n" + "=" * 60)
+    print("🆘 IMMEDIATE SURVIVAL PLAN")
+    print("=" * 60)
+    print("What you should ACTUALLY do (not your dream business):")
 
-    sample_idea = """
-    A comprehensive FinTech platform called "TradeFlow Sri Lanka" that combines:
+    for action in discovery_results["immediate_survival_plan"]:
+        print(f"\n   {action['priority']}: {action['action']}")
+        print(f"   Timeline: {action['timeline']}")
+        if 'expected_income' in action:
+            print(f"   Income: {action['expected_income']}")
+        else:
+            print(f"   Outcome: {action['expected_outcome']}")
 
-    1. Import/Export Management Software:
-       - Automated documentation and customs clearance
-       - Supplier verification and due diligence tools
-       - Real-time shipment tracking with IoT integration
-       - Currency hedging recommendations based on market analysis
+    print(f"\n" + "=" * 60)
+    print("🎯 CONSTRUCTIVE RECOMMENDATIONS")
+    print("=" * 60)
+    
+    # Generate final recommendations based on overall assessment
+    overall = reality['overall_assessment']
+    
+    if "NOT READY" in overall:
+        print("⚠️ RECOMMENDATION: FOCUS ON PREPARATION FIRST")
+        print("\n   Strategic preparation steps:")
+        print("   1. Secure employment to build financial foundation")
+        print("   2. Start weekend freelancing to learn customer acquisition") 
+        print("   3. Join industry associations to build your network")
+        print("   4. Save aggressively while learning business fundamentals")
+        print("   5. Find a mentor who's succeeded in your target sector")
+        
+    elif "MARGINAL" in overall:
+        print("⚠️ RECOMMENDATION: START LEAN AND TEST CAREFULLY")
+        print("\n   Risk mitigation approach:")
+        print("   1. Keep employment income while testing business concept")
+        print("   2. Start with minimal viable service offering")
+        print("   3. Get paying customers before investing in infrastructure")
+        print("   4. Build team only after proven revenue stream")
+        print("   5. Set strict capital limits and timeline checkpoints")
+        
+    else:
+        print("✅ RECOMMENDATION: PROCEED WITH STRATEGIC PLANNING")
+        print("\n   Success framework:")
+        print("   1. Focus on cash flow positive operations from month 1")
+        print("   2. Build key relationships before needing them")
+        print("   3. Start with proven market demand, not innovative solutions")
+        print("   4. Hire slowly and fire quickly to conserve capital")
+        print("   5. Plan for 2-3x longer timeline than initial projections")
 
-    2. Trade Finance Solutions:
-       - AI-powered credit scoring for importers/exporters
-       - Invoice factoring and supply chain financing
-       - Letters of credit digitization and processing
-       - Working capital optimization algorithms
+    print(f"\n💡 This analysis aims to help you succeed by being realistic about challenges.")
+    print("The goal is informed decision-making, not discouragement.")
+    print("Many successful entrepreneurs wish they had this level of insight before starting.")
 
-    3. Investment Analytics Integration:
-       - Portfolio tracking for trade-related investments
-       - Commodity price prediction using ML models
-       - Foreign exchange risk analysis and hedging strategies
-       - Cryptocurrency payment integration for international trades
+    # Save results
+    with open("brutal_business_analysis.txt", "w", encoding="utf-8") as f:
+        f.write("BRUTAL BUSINESS ANALYSIS RESULTS\n")
+        f.write("=" * 50 + "\n\n")
+        f.write(f"Entrepreneur: {your_profile.name}\n")
+        f.write(f"Overall Assessment: {reality['overall_assessment']}\n")
+        f.write(f"Time to Readiness: {reality['time_to_readiness']}\n\n")
+        
+        f.write("SECTOR RANKINGS BY SUCCESS PROBABILITY:\n")
+        for opp in discovery_results["ranked_opportunities"]:
+            f.write(f"{opp['rank']}. {opp['sector']}: {opp['success_probability']} - {opp['recommendation']}\n")
+        
+        f.write(f"\nCRITICAL GAPS TO ADDRESS:\n")
+        for gap in reality.get("critical_gaps", []):
+            f.write(f"• {gap}\n")
+            
+        f.write(f"\nHARSH TRUTHS:\n")
+        for truth in discovery_results["harsh_truths"]:
+            f.write(f"• {truth}\n")
 
-    Target Market: 
-    - Sri Lankan SME importers/exporters (5,000+ active businesses)
-    - Trading companies looking for digital transformation
-    - Financial institutions needing trade finance solutions
+    print(f"\n📄 Detailed analysis saved to brutal_business_analysis.txt")
 
-    Revenue Model:
-    - SaaS subscription: LKR 25,000-100,000/month per business
-    - Transaction fees: 0.5-2% on financing facilitated
-    - Premium analytics: LKR 15,000/month for advanced features
-
-    Unique Value Proposition:
-    - First integrated trade + finance + investment platform in Sri Lanka
-    - Leverages your Business + financial analysis skills
-    - Addresses real pain points in import/export processes
-    - Scalable across South Asian markets
-
-    Investment Estimate: LKR 8-12 million for MVP development and first-year operations
-    Revenue Projection: LKR 2-5 million in year 1, scaling to LKR 50-200 million by year 3
-    """
-
-    validation_results = platform.validate_specific_idea(sample_idea)
-
-    output_lines.append(f"BUSINESS IDEA: TradeFlow Sri Lanka - Integrated Trade & Finance Platform")
-    output_lines.append(f"VALIDATION ANALYSIS:")
-
-    output_lines.append(f"\n📋 VALIDATION STEPS TO EXECUTE:")
-    for step in validation_results["market_validation_steps"]:
-        output_lines.append(f"   {step['step']}: {step['action']}")
-        output_lines.append(f"   Timeline: {step['timeline']} | Cost: {step['cost']}")
-
-    output_lines.append(f"\n💰 FINANCIAL REALITY CHECK:")
-    financial = validation_results["financial_reality_check"]
-    for key, value in financial.items():
-        output_lines.append(f"   {key.replace('_', ' ').title()}: {value}")
-
-    output_lines.append(f"\n⚠️ RISK ASSESSMENT:")
-    risks = validation_results["risk_assessment"]
-    output_lines.append(f"   High Risks: {', '.join(risks['high_risks'][:2])}")
-    output_lines.append(f"   Mitigation: {risks['mitigation_strategies'][0]}")
-
-    recommendation = validation_results["go_no_go_recommendation"]
-    output_lines.append(f"\n🎯 RECOMMENDATION: {recommendation['recommendation']}")
-    output_lines.append(f"   Confidence: {recommendation['confidence']}")
-    output_lines.append(f"   Next Action: {recommendation['next_immediate_action']}")
-    output_lines.append(f"   Investment Limit: {recommendation['investment_recommendation']}")
-
-    output_lines.append(f"\n" + "=" * 60)
-    output_lines.append("💡 Kay Flock'S SPECIFIC OPPORTUNITIES")
-    output_lines.append("=" * 60)
-    output_lines.append("Based on your unique profile combining Business,")
-    output_lines.append("financial analysis skills, and import/export interests:")
-    output_lines.append("")
-    output_lines.append("🚀 HIGH-POTENTIAL OPPORTUNITIES:")
-    output_lines.append("1. FinTech Import/Export Platform (TradeFlow concept above)")
-    output_lines.append("2. Cryptocurrency Trading Bot for CSE-listed companies")  
-    output_lines.append("3. AI-powered Investment Research Platform for Sri Lankans")
-    output_lines.append("4. Import Optimization Software for Electronics/Tech Components")
-    output_lines.append("5. Digital Loan Marketplace connecting SME traders to lenders")
-    output_lines.append("")
-    output_lines.append("💰 IMMEDIATE INCOME OPPORTUNITIES (While Building Main Venture):")
-    output_lines.append("• Freelance Trading for trading firms")
-    output_lines.append("• Investment portfolio consulting for young professionals")  
-    output_lines.append("• Custom trading algorithm development")
-    output_lines.append("• Import/export process consulting with tech solutions")
-    output_lines.append("• Cryptocurrency education workshops")
-    output_lines.append("")
-    output_lines.append("🎯 YOUR COMPETITIVE ADVANTAGES:")
-    output_lines.append("• Young + tech-savvy = can build modern solutions")
-    output_lines.append("• Software skills + financial knowledge = rare combination")
-    output_lines.append("• Understanding both crypto and traditional investments")
-    output_lines.append("• Can code solutions that older entrepreneurs can't")
-    output_lines.append("• Lower living costs = can take more risks")
-    output_lines.append("• English fluency = can access global markets")
-
-    output_lines.append(f"\n" + "=" * 60)
-    output_lines.append("📚 REGULATORY CHECKLIST FOR YOUR BUSINESS")
-    output_lines.append("=" * 60)
-
-    for i, requirement in enumerate(discovery_results["regulatory_checklist"], 1):
-        output_lines.append(f"   {i}. {requirement}")
-
-    output_lines.append(f"\n📄 ADDITIONAL REGULATIONS FOR FINTECH/IMPORT-EXPORT:")
-    output_lines.append("   • Central Bank of Sri Lanka (CBSL) approval for payment systems")
-    output_lines.append("   • Sri Lanka Accounting Standards for financial reporting")
-    output_lines.append("   • Data Protection compliance for customer financial data")
-    output_lines.append("   • Import/Export license from Department of Commerce")
-    output_lines.append("   • Foreign exchange regulations compliance (if handling forex)")
-    output_lines.append("   • Anti-Money Laundering (AML) compliance procedures")
-
-    output_lines.append(f"\n" + "=" * 60)
-    output_lines.append("🚀 Flocka'S NEXT 90 DAYS ACTION PLAN")
-    output_lines.append("=" * 60)
-    output_lines.append("WEEKS 1-2: Market Research & Validation")
-    output_lines.append("• Interview 20 import/export businesses about pain points")
-    output_lines.append("• Survey 50 young professionals about investment needs")
-    output_lines.append("• Research competitors in FinTech and trade finance")
-    output_lines.append("")
-    output_lines.append("WEEKS 3-6: Technical Feasibility & Prototyping")
-    output_lines.append("• Build MVP of trade documentation automation")
-    output_lines.append("• Create investment analytics dashboard prototype")
-    output_lines.append("• Test cryptocurrency payment integration")
-    output_lines.append("")  
-    output_lines.append("WEEKS 7-10: Business Model Validation")
-    output_lines.append("• Pilot with 3-5 import/export SMEs")
-    output_lines.append("• Test pricing models and revenue assumptions")
-    output_lines.append("• Validate regulatory compliance requirements")
-    output_lines.append("")
-    output_lines.append("WEEKS 11-12: Funding & Next Steps Decision")
-    output_lines.append("• Apply to ICTA grants and startup accelerators")
-    output_lines.append("• Pitch to angel investors in Colombo tech scene")
-    output_lines.append("• Decide on full-time commitment vs gradual transition")
-
-    output_lines.append(f"\n" + "=" * 60)
-    output_lines.append("🌟 WHY THIS ANALYSIS IS UNIQUE FOR YOU")
-    output_lines.append("=" * 60)
-    output_lines.append("Unlike generic ChatGPT advice, this platform provides:")
-    output_lines.append("")
-    output_lines.append("✅ Your exact fit scores for each business sector")
-    output_lines.append("✅ Opportunities matching your software + finance skills")
-    output_lines.append("✅ Realistic LKR projections for your capital level") 
-    output_lines.append("✅ Age-appropriate risk tolerance and timeline")
-    output_lines.append("✅ Sri Lankan market-specific insights and data")
-    output_lines.append("✅ Actual funding sources available to you locally")
-    output_lines.append("✅ Regulatory requirements you'll actually face")
-    output_lines.append("✅ Network building strategies for young entrepreneurs")
-    output_lines.append("✅ Validation steps you can execute with limited resources")
-    output_lines.append("✅ Business ideas combining your unique skill mix")
-
-    output_lines.append(f"\n🎯 YOUR ENTREPRENEURIAL ADVANTAGES AT 20:")
-    output_lines.append("• High risk tolerance and adaptability")
-    output_lines.append("• Native digital skills and tech fluency")  
-    output_lines.append("• Lower personal expenses = more flexibility")
-    output_lines.append("• Long time horizon for building wealth")
-    output_lines.append("• Energy and motivation to work intensively")
-    output_lines.append("• Growing network of young professionals as potential customers")
-    output_lines.append("• Understanding of emerging technologies (crypto, AI, blockchain)")
-
-    output_lines.append(f"\n💡 REMEMBER: Start small, validate quickly, scale systematically.")
-    output_lines.append("Your Business skills give you the ability to build")
-    output_lines.append("solutions that solve real problems in finance and trade.")
-    output_lines.append("Focus on solving one specific pain point extremely well first.")
-
-    # Save all output to a text file
-    with open("business_discovery_report.txt", "w", encoding="utf-8") as f:
-        f.write("\n".join(output_lines))
-
-    print("\nAnalysis complete. Results saved to business_discovery_report.txt")
-
-# Example of how to customize and run your analysis
-def run_your_discovery():
-    """Run this function after customizing your profile"""
-    asyncio.run(main())
-
-# Run the platform
+# Run the brutal analysis
 if __name__ == "__main__":
-    run_your_discovery()
+    asyncio.run(main())
