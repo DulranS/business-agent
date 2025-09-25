@@ -424,13 +424,7 @@ class NetworkAnalyzer:
     
     def _find_relevant_connections(self, sector: str) -> List[NetworkConnection]:
         """Find network connections relevant to target sector"""
-        # In production, integrate with:
-        # - LinkedIn API
-        # - Professional association databases
-        # - Event attendance records
-        # - Email contact analysis
-        
-        # Mock relevant connections
+        # Mock relevant connections for demo
         connections = [
             NetworkConnection(
                 name="Priya Wickramasinghe",
@@ -508,7 +502,6 @@ class NetworkAnalyzer:
     
     def _get_networking_events(self, sector: str) -> List[Dict[str, str]]:
         """Get upcoming networking events for sector"""
-        # In production, integrate with event platforms like Eventbrite, Meetup
         events = [
             {
                 "name": "Sri Lankan Tech Entrepreneurs Meetup",
@@ -590,6 +583,10 @@ class BusinessModelGenerator:
             if available_capital >= base_model["min_capital"]:
                 variation = self._adapt_model_to_capital(base_model, available_capital)
                 variation["viability_score"] = self._calculate_viability(variation, target_market)
+                variation["year_1_projection"] = base_model.get("min_capital", 1000000) * 0.5
+                variation["year_2_projection"] = base_model.get("min_capital", 1000000) * 2
+                variation["year_3_projection"] = base_model.get("min_capital", 1000000) * 5
+                variation["implementation_difficulty"] = base_model.get("complexity", "Medium")
                 variations.append(variation)
         
         # Sort by viability score
@@ -608,7 +605,8 @@ class BusinessModelGenerator:
                     "customer_segments": ["Small businesses", "E-commerce stores", "Service providers"],
                     "min_capital": 2000000,
                     "time_to_revenue": "6-9 months",
-                    "scalability": "High"
+                    "scalability": "High",
+                    "complexity": "Hard"
                 },
                 {
                     "name": "Personal Finance App",
@@ -618,7 +616,8 @@ class BusinessModelGenerator:
                     "customer_segments": ["Young professionals", "Students", "Small savers"],
                     "min_capital": 500000,
                     "time_to_revenue": "3-6 months",
-                    "scalability": "Very High"
+                    "scalability": "Very High",
+                    "complexity": "Medium"
                 }
             ],
             "digital_services": [
@@ -630,7 +629,8 @@ class BusinessModelGenerator:
                     "customer_segments": ["Mid-size companies", "Growing startups", "Traditional businesses"],
                     "min_capital": 200000,
                     "time_to_revenue": "1-3 months",
-                    "scalability": "Medium"
+                    "scalability": "Medium",
+                    "complexity": "Easy"
                 }
             ]
         }
@@ -1138,6 +1138,90 @@ class CustomerDiscoveryAutomator:
         self.survey_templates = self._load_survey_templates()
         self.interview_scripts = self._load_interview_scripts()
         self.validation_frameworks = self._load_validation_frameworks()
+    
+    def _load_survey_templates(self) -> Dict[str, Any]:
+        """Load survey templates for different business types"""
+        return {
+            "fintech": {
+                "problem_discovery": [
+                    "How do you currently manage your personal finances?",
+                    "What's the biggest challenge you face with financial management?",
+                    "How much time do you spend weekly on financial tasks?"
+                ],
+                "solution_validation": [
+                    "Would you be interested in an automated finance tracking app?",
+                    "What features would be most valuable to you?",
+                    "How much would you pay for such a solution?"
+                ]
+            },
+            "digital_services": {
+                "problem_discovery": [
+                    "What digital marketing challenges does your business face?",
+                    "How do you currently handle your online presence?",
+                    "What's your monthly digital marketing budget?"
+                ],
+                "solution_validation": [
+                    "Would you outsource digital marketing to a specialized agency?",
+                    "What services would be most important?",
+                    "What's your preferred engagement model?"
+                ]
+            }
+        }
+    
+    def _load_interview_scripts(self) -> Dict[str, Any]:
+        """Load interview script templates"""
+        return {
+            "problem_interview": {
+                "introduction": "Thank you for taking time to speak with me. I'm researching challenges that [target audience] face with [problem area].",
+                "background_questions": [
+                    "Can you walk me through your current process for [relevant activity]?",
+                    "What tools do you currently use?",
+                    "How long have you been doing this?"
+                ],
+                "problem_questions": [
+                    "What's the most frustrating part of this process?",
+                    "When was the last time this problem occurred?",
+                    "How do you currently work around this issue?"
+                ]
+            },
+            "solution_interview": {
+                "concept_presentation": "I'd like to show you a concept we're working on and get your thoughts.",
+                "reaction_questions": [
+                    "What's your first impression?",
+                    "How would this fit into your current workflow?",
+                    "What concerns would you have about using this?"
+                ]
+            }
+        }
+    
+    def _load_validation_frameworks(self) -> Dict[str, Any]:
+        """Load validation frameworks for different business models"""
+        return {
+            "saas": {
+                "problem_validation": {
+                    "target_metric": "70% of respondents rate problem as significant",
+                    "sample_size": 100,
+                    "methods": ["surveys", "interviews", "observation"]
+                },
+                "solution_validation": {
+                    "target_metric": "40% express strong purchase intent",
+                    "sample_size": 50,
+                    "methods": ["concept_testing", "prototype_feedback"]
+                }
+            },
+            "marketplace": {
+                "supply_validation": {
+                    "target_metric": "50+ suppliers willing to participate",
+                    "sample_size": 100,
+                    "methods": ["supplier_interviews", "commitment_surveys"]
+                },
+                "demand_validation": {
+                    "target_metric": "100+ buyers express interest",
+                    "sample_size": 200,
+                    "methods": ["buyer_surveys", "pre_launch_signups"]
+                }
+            }
+        }
     
     def generate_customer_discovery_plan(self, business_idea: str, target_market: str) -> Dict[str, Any]:
         """Generate comprehensive customer discovery plan"""
@@ -1745,17 +1829,36 @@ class EnhancedBusinessDiscoveryPlatform:
         }
     
     async def _save_comprehensive_report(self, analysis: Dict[str, Any]) -> str:
-        """Save comprehensive analysis report"""
+        """Save comprehensive analysis report as a text file"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"comprehensive_business_analysis_{timestamp}.json"
-        
+        filename = f"comprehensive_business_analysis_{timestamp}.txt"
+
         try:
+            def flatten_dict(d, indent=0):
+                lines = []
+                for key, value in d.items():
+                    prefix = "  " * indent + f"{key}: "
+                    if isinstance(value, dict):
+                        lines.append(prefix)
+                        lines.extend(flatten_dict(value, indent + 1))
+                    elif isinstance(value, list):
+                        lines.append(prefix)
+                        for item in value:
+                            if isinstance(item, dict):
+                                lines.extend(flatten_dict(item, indent + 1))
+                            else:
+                                lines.append("  " * (indent + 1) + str(item))
+                    else:
+                        lines.append(prefix + str(value))
+                return lines
+
             with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(analysis, f, indent=2, default=str)
-            
+                for line in flatten_dict(analysis):
+                    f.write(line + "\n")
+
             logger.info(f"Comprehensive report saved to {filename}")
             return filename
-            
+
         except Exception as e:
             logger.error(f"Failed to save report: {e}")
             return ""
