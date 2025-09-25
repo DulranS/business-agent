@@ -6,12 +6,12 @@ Personalized Analysis Based on Your Unique Situation
 
 ENTREPRENEUR PROFILE LOADED:
 
-ENTREPRENEUR: Dulran Samarasinghe | Colombo, Sri Lanka
-BACKGROUND: Software Engineering | Experience: Software Development, Programming Projects
+ENTREPRENEUR: Kay Flock | Colombo, Sri Lanka
+BACKGROUND: Business | Experience: Trading, Violence Projects
 CAPITAL: LKR 800,000 available | Monthly needs: LKR 45,000
 TIMELINE: Need income 3-6months | Risk tolerance: aggressive
 COMMITMENT: full-time | Prefer solo setup
-SKILLS: Software Development, Programming, System Architecture, Database Design
+SKILLS: Trading, Violence, System Architecture, Database Design
 INTERESTS: Technology, Financial Technology, Import/Export
 
 
@@ -27,19 +27,19 @@ INTERESTS: Technology, Financial Technology, Import/Export
 
 🎯 YOUR TOP 3 BUSINESS OPPORTUNITIES:
 
-   1. TECHNOLOGY SECTOR
-      Fit Score: 6.8/10
-      Why Good Fit: Score 6.8/10 based on your capital, skills, and timeline
-      Best Opportunity: FinTech apps for Sri Lankan market (digital wallets, investment platforms)
-      Investment Needed: LKR 300K - 3M
-      Revenue Potential: LKR 500K - 25M annually
-
-   2. SERVICES SECTOR
+   1. SERVICES SECTOR
       Fit Score: 6.1/10
       Why Good Fit: Score 6.1/10 based on your capital, skills, and timeline
       Best Opportunity: Financial advisory services for young professionals
       Investment Needed: LKR 200K - 2M
       Revenue Potential: LKR 1M - 15M annually
+
+   2. TECHNOLOGY SECTOR
+      Fit Score: 6.0/10
+      Why Good Fit: Score 6.0/10 based on your capital, skills, and timeline
+      Best Opportunity: FinTech apps for Sri Lankan market (digital wallets, investment platforms)
+      Investment Needed: LKR 300K - 3M
+      Revenue Potential: LKR 500K - 25M annually
 
    3. TOURISM SECTOR
       Fit Score: 6.0/10
@@ -49,7 +49,7 @@ INTERESTS: Technology, Financial Technology, Import/Export
       Revenue Potential: LKR 2M - 50M annually
 
 📋 YOUR IMMEDIATE ACTION PLAN:
-   1. Deep dive research on technology opportunities in Colombo
+   1. Deep dive research on services opportunities in Colombo
    2. Conduct 5 customer interviews in your top sector
    3. Calculate exact startup costs for your specific business idea
    4. Join relevant industry associations and networking groups
@@ -68,7 +68,7 @@ INTERESTS: Technology, Financial Technology, Import/Export
 📈 DETAILED SECTOR ANALYSIS
 ============================================================
 
-🏢 TECHNOLOGY SECTOR - Fit Score: 6.8/10
+🏢 TECHNOLOGY SECTOR - Fit Score: 6.0/10
    💰 Capital Fit: 4.0/10
       Your LKR 800,000 vs typical LKR 300K - 3M needed for this sector
    ⏱️ Timeline Fit: 9.0/10
@@ -127,7 +127,7 @@ INTERESTS: Technology, Financial Technology, Import/Export
    🎯 Top Opportunities in services:
       • Financial advisory services for young professionals
       • Investment portfolio management for HNIs
-      • Software development consultancy for financial firms
+      • Trading consultancy for financial firms
    📝 Next Steps for services:
       • Research top 5 competitors in services in Colombo
       • Interview 3 potential customers in services
@@ -220,9 +220,9 @@ VALIDATION ANALYSIS:
    Investment Limit: Limit initial investment to LKR 100K for validation phase
 
 ============================================================
-💡 DULRAN'S SPECIFIC OPPORTUNITIES
+💡 Kay Flock'S SPECIFIC OPPORTUNITIES
 ============================================================
-Based on your unique profile combining software engineering,
+Based on your unique profile combining Business,
 financial analysis skills, and import/export interests:
 
 🚀 HIGH-POTENTIAL OPPORTUNITIES:
@@ -233,7 +233,7 @@ financial analysis skills, and import/export interests:
 5. Digital Loan Marketplace connecting SME traders to lenders
 
 💰 IMMEDIATE INCOME OPPORTUNITIES (While Building Main Venture):
-• Freelance software development for trading firms
+• Freelance Trading for trading firms
 • Investment portfolio consulting for young professionals
 • Custom trading algorithm development
 • Import/export process consulting with tech solutions
@@ -270,7 +270,7 @@ financial analysis skills, and import/export interests:
    • Anti-Money Laundering (AML) compliance procedures
 
 ============================================================
-🚀 DULRAN'S NEXT 90 DAYS ACTION PLAN
+🚀 Flocka'S NEXT 90 DAYS ACTION PLAN
 ============================================================
 WEEKS 1-2: Market Research & Validation
 • Interview 20 import/export businesses about pain points
@@ -318,6 +318,6 @@ Unlike generic ChatGPT advice, this platform provides:
 • Understanding of emerging technologies (crypto, AI, blockchain)
 
 💡 REMEMBER: Start small, validate quickly, scale systematically.
-Your software engineering skills give you the ability to build
+Your Business skills give you the ability to build
 solutions that solve real problems in finance and trade.
 Focus on solving one specific pain point extremely well first.

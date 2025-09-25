@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime
 import requests
 from concurrent.futures import ThreadPoolExecutor
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -146,11 +148,11 @@ class MarketIntelligence:
                 "key_opportunities": [
                     "Financial advisory services for young professionals",
                     "Investment portfolio management for HNIs",
-                    "Software development consultancy for financial firms",
+                    "Trading consultancy for financial firms",
                     "Digital transformation consulting for traditional businesses",
                     "Cryptocurrency education and advisory services",
                     "Import/export consulting with tech solutions",
-                    "Custom software development for trading firms",
+                    "Custom Trading for trading firms",
                     "Business intelligence and analytics consulting"
                 ]
             },
@@ -439,24 +441,77 @@ class OpportunityAnalyzer:
             
         return recommendations
 
+class Qwen3RAGPipeline:
+    """
+    Qwen3 8B + RAG pipeline for local inference and retrieval.
+    """
+    def __init__(self, model_path="Qwen/Qwen1.5-8B-Chat", knowledge_base_path="knowledge_base/"):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+        self.model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.float16, device_map="auto")
+        self.knowledge_base_path = knowledge_base_path
+        self.documents = self._load_documents()
+
+    def _load_documents(self):
+        docs = []
+        if not os.path.exists(self.knowledge_base_path):
+            return docs
+        for fname in os.listdir(self.knowledge_base_path):
+            if fname.endswith(".txt"):
+                with open(os.path.join(self.knowledge_base_path, fname), "r", encoding="utf-8") as f:
+                    docs.append({"title": fname, "content": f.read()})
+        return docs
+
+    def retrieve(self, query: str, top_k: int = 2) -> List[str]:
+        # Simple keyword search for demonstration; replace with vector search for production
+        results = []
+        for doc in self.documents:
+            if query.lower() in doc["content"].lower():
+                results.append(doc["content"][:500])
+        return results[:top_k]
+
+    def generate(self, prompt: str, context: List[str], max_new_tokens: int = 256) -> str:
+        # Concatenate context and prompt for RAG
+        context_str = "\n\n".join(context)
+        full_prompt = f"Context:\n{context_str}\n\nPrompt:\n{prompt}"
+        inputs = self.tokenizer(full_prompt, return_tensors="pt").to(self.model.device)
+        outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=True, temperature=0.7)
+        return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+
 class SMEDiscoveryPlatform:
     """Main platform for Sri Lankan SME discovery"""
-    
+
     def __init__(self):
         self.market_intel = MarketIntelligence()
         self.analyzer = OpportunityAnalyzer(self.market_intel)
         self.profile: Optional[EntrepreneurProfile] = None
-        
+        self.rag_pipeline = Qwen3RAGPipeline(
+            model_path="Qwen/Qwen1.5-8B-Chat",  # Adjust path if needed
+            knowledge_base_path="knowledge_base/"  # Folder with .txt docs for retrieval
+        )
+
     def set_profile(self, profile: EntrepreneurProfile):
         """Set the entrepreneur profile"""
         self.profile = profile
         logger.info(f"Profile set for {profile.name} in {profile.location}")
-    
+
     def discover_opportunities(self) -> Dict[str, Any]:
         """Main discovery function - analyzes all sectors for the entrepreneur"""
         if not self.profile:
             return {"error": "No entrepreneur profile set"}
-        
+
+        # --- Qwen3 8B + RAG ENRICHMENT ---
+        rag_query = (
+            f"Best business opportunities for a {self.profile.age_range} entrepreneur in {self.profile.location} "
+            f"with skills: {', '.join(self.profile.current_skills[:5])} and interests: {', '.join(self.profile.industry_interests[:3])}"
+        )
+        retrieved_contexts = self.rag_pipeline.retrieve(rag_query, top_k=3)
+        rag_prompt = (
+            f"Given the entrepreneur profile:\n{self.profile.get_context_summary()}\n"
+            f"and the Sri Lankan market context, analyze and recommend the most suitable business sectors and paths. "
+            f"Provide sector fit, financial projections, and actionable steps."
+        )
+        rag_llm_output = self.rag_pipeline.generate(rag_prompt, retrieved_contexts, max_new_tokens=350)
+
         results = {
             "entrepreneur": self.profile.name,
             "location": self.profile.location,
@@ -466,19 +521,20 @@ class SMEDiscoveryPlatform:
             "top_recommendations": [],
             "immediate_actions": [],
             "funding_options": self._get_funding_options(),
-            "regulatory_checklist": self._get_regulatory_checklist()
+            "regulatory_checklist": self._get_regulatory_checklist(),
+            "rag_llm_output": rag_llm_output  # Add RAG LLM output to results
         }
-        
+
         # Analyze each sector
         sector_scores = {}
         for sector in self.market_intel.sector_data.keys():
             analysis = self.analyzer.analyze_fit(self.profile, sector)
             results["sector_analysis"][sector] = analysis
             sector_scores[sector] = analysis["overall_fit_score"]
-        
+
         # Generate top recommendations based on fit scores
         sorted_sectors = sorted(sector_scores.items(), key=lambda x: x[1], reverse=True)
-        
+
         for sector, score in sorted_sectors[:3]:
             sector_data = self.market_intel.sector_data[sector]
             results["top_recommendations"].append({
@@ -489,20 +545,20 @@ class SMEDiscoveryPlatform:
                 "investment_needed": sector_data["avg_startup_cost"],
                 "revenue_potential": sector_data["revenue_potential"]
             })
-        
+
         # Generate immediate actions
         best_sector = sorted_sectors[0][0]
         results["immediate_actions"] = [
             f"Deep dive research on {best_sector} opportunities in {self.profile.location}",
             "Conduct 5 customer interviews in your top sector",
-            "Calculate exact startup costs for your specific business idea", 
+            "Calculate exact startup costs for your specific business idea",
             "Join relevant industry associations and networking groups",
             "Create a 90-day validation plan",
             "Identify potential mentors in your chosen sector"
         ]
-        
+
         return results
-    
+
     def validate_specific_idea(self, business_idea: str) -> Dict[str, Any]:
         """Validate a specific business idea"""
         if not self.profile:
@@ -672,18 +728,18 @@ class SMEDiscoveryPlatform:
 
 def create_your_profile() -> EntrepreneurProfile:
     """
-    Dulran Samarasinghe's entrepreneurial profile
+    Kay Flock's entrepreneurial profile
     """
     
     return EntrepreneurProfile(
         # PERSONAL INFO
-        name="Dulran Samarasinghe",
+        name="Kay Flock",
         location="Colombo",  # Assuming Colombo for best business opportunities
         age_range="18-25",
-        education_background="Software Engineering", 
-        work_experience=["Software Development", "Programming Projects", "Tech Solutions"],
+        education_background="Business", 
+        work_experience=["Trading", "Violence Projects", "Pest control Solutions"],
         current_skills=[
-            "Software Development", "Programming", "System Architecture", "Database Design",
+            "Trading", "Violence", "System Architecture", "Database Design",
             "Web Development", "Mobile Development", "API Development", "Cloud Computing",
             "Financial Analysis", "Investment Analysis", "Cryptocurrency Trading", 
             "Stock Market Analysis", "Portfolio Management", "Risk Assessment"
@@ -750,6 +806,12 @@ async def main():
 
     # Run comprehensive opportunity discovery
     discovery_results = platform.discover_opportunities()
+
+    # Add Qwen3 8B + RAG LLM output at the top of the report
+    output_lines.append("\n" + "=" * 60)
+    output_lines.append("🤖 QWEN3 8B + RAG LLM RECOMMENDATION")
+    output_lines.append("=" * 60)
+    output_lines.append(discovery_results.get("rag_llm_output", "No LLM output."))
 
     # Display results in an organized way
     output_lines.append(f"\n📊 ECONOMIC CONTEXT FOR SRI LANKA:")
@@ -836,7 +898,7 @@ async def main():
 
     Unique Value Proposition:
     - First integrated trade + finance + investment platform in Sri Lanka
-    - Leverages your software engineering + financial analysis skills
+    - Leverages your Business + financial analysis skills
     - Addresses real pain points in import/export processes
     - Scalable across South Asian markets
 
@@ -871,9 +933,9 @@ async def main():
     output_lines.append(f"   Investment Limit: {recommendation['investment_recommendation']}")
 
     output_lines.append(f"\n" + "=" * 60)
-    output_lines.append("💡 DULRAN'S SPECIFIC OPPORTUNITIES")
+    output_lines.append("💡 Kay Flock'S SPECIFIC OPPORTUNITIES")
     output_lines.append("=" * 60)
-    output_lines.append("Based on your unique profile combining software engineering,")
+    output_lines.append("Based on your unique profile combining Business,")
     output_lines.append("financial analysis skills, and import/export interests:")
     output_lines.append("")
     output_lines.append("🚀 HIGH-POTENTIAL OPPORTUNITIES:")
@@ -884,7 +946,7 @@ async def main():
     output_lines.append("5. Digital Loan Marketplace connecting SME traders to lenders")
     output_lines.append("")
     output_lines.append("💰 IMMEDIATE INCOME OPPORTUNITIES (While Building Main Venture):")
-    output_lines.append("• Freelance software development for trading firms")
+    output_lines.append("• Freelance Trading for trading firms")
     output_lines.append("• Investment portfolio consulting for young professionals")  
     output_lines.append("• Custom trading algorithm development")
     output_lines.append("• Import/export process consulting with tech solutions")
@@ -914,7 +976,7 @@ async def main():
     output_lines.append("   • Anti-Money Laundering (AML) compliance procedures")
 
     output_lines.append(f"\n" + "=" * 60)
-    output_lines.append("🚀 DULRAN'S NEXT 90 DAYS ACTION PLAN")
+    output_lines.append("🚀 Flocka'S NEXT 90 DAYS ACTION PLAN")
     output_lines.append("=" * 60)
     output_lines.append("WEEKS 1-2: Market Research & Validation")
     output_lines.append("• Interview 20 import/export businesses about pain points")
@@ -962,7 +1024,7 @@ async def main():
     output_lines.append("• Understanding of emerging technologies (crypto, AI, blockchain)")
 
     output_lines.append(f"\n💡 REMEMBER: Start small, validate quickly, scale systematically.")
-    output_lines.append("Your software engineering skills give you the ability to build")
+    output_lines.append("Your Business skills give you the ability to build")
     output_lines.append("solutions that solve real problems in finance and trade.")
     output_lines.append("Focus on solving one specific pain point extremely well first.")
 
