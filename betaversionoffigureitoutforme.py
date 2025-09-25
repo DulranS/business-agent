@@ -1829,33 +1829,36 @@ class EnhancedBusinessDiscoveryPlatform:
         }
     
     async def _save_comprehensive_report(self, analysis: Dict[str, Any]) -> str:
-        """Save comprehensive analysis report as a text file"""
+        """Save comprehensive analysis report as a nicely formatted text file"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"comprehensive_business_analysis_{timestamp}.txt"
 
-        try:
-            def flatten_dict(d, indent=0):
+        def format_value(value, indent=0):
+            pad = "  " * indent
+            if isinstance(value, dict):
                 lines = []
-                for key, value in d.items():
-                    prefix = "  " * indent + f"{key}: "
-                    if isinstance(value, dict):
-                        lines.append(prefix)
-                        lines.extend(flatten_dict(value, indent + 1))
-                    elif isinstance(value, list):
-                        lines.append(prefix)
-                        for item in value:
-                            if isinstance(item, dict):
-                                lines.extend(flatten_dict(item, indent + 1))
-                            else:
-                                lines.append("  " * (indent + 1) + str(item))
-                    else:
-                        lines.append(prefix + str(value))
+                for k, v in value.items():
+                    lines.append(f"{pad}{k}:")
+                    lines.extend(format_value(v, indent + 1))
                 return lines
+            elif isinstance(value, list):
+                lines = []
+                for item in value:
+                    if isinstance(item, dict):
+                        lines.extend(format_value(item, indent + 1))
+                    else:
+                        lines.append(f"{pad}- {item}")
+                return lines
+            else:
+                return [f"{pad}{value}"]
 
+        try:
             with open(filename, 'w', encoding='utf-8') as f:
-                for line in flatten_dict(analysis):
-                    f.write(line + "\n")
-
+                for key, value in analysis.items():
+                    f.write(f"{key}:\n")
+                    for line in format_value(value, 1):
+                        f.write(line + "\n")
+                    f.write("\n")
             logger.info(f"Comprehensive report saved to {filename}")
             return filename
 
