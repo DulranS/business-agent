@@ -20,7 +20,7 @@ class Document:
 
 # HTTP-based LLM interface for Ollama
 class OllamaHTTPClient:
-    def __init__(self, model_name: str = "llama3.1:8b", host: str = "http://localhost:11434"):
+    def __init__(self, model_name: str = "qwen3:8b", host: str = "http://localhost:11434"):
         self.model_name = model_name
         self.host = host.rstrip('/')
         self.generate_url = f"{self.host}/api/generate"
@@ -700,7 +700,7 @@ Return valid JSON with job_roles array only."""
             return {"job_roles": [], "error": str(e)}
 
 class WorkflowOrchestrator:
-    def __init__(self, ollama_host: str = "http://localhost:11434", model_name: str = "llama3.1:8b"):
+    def __init__(self, ollama_host: str = "http://localhost:11434", model_name: str = "qwen3:8b"):
         print(f"Initializing with model: {model_name}")
         
         # Initialize HTTP-based LLM client  
@@ -715,7 +715,7 @@ class WorkflowOrchestrator:
         available_models = self.llm.list_models()
         if not any(model_name in model for model in available_models):
             # Try alternative model names
-            alt_names = ["llama3.1:8b", "llama3:8b", "llama3.1", "llama3"]
+            alt_names = ["qwen3:8b", "qwen3:8b", "qwen3", "qwen3"]
             found_model = None
             for alt in alt_names:
                 if any(alt in model for model in available_models):
@@ -888,7 +888,7 @@ async def quick_connection_test():
             print(f"📦 Available models: {models}")
             
             # Find suitable model
-            suitable_models = [m for m in models if any(x in m.lower() for x in ['llama3.1', 'llama3', 'llama'])]
+            suitable_models = [m for m in models if any(x in m.lower() for x in ['qwen3', 'qwen3', 'llama'])]
             
             if suitable_models:
                 test_model = suitable_models[0]
@@ -906,7 +906,7 @@ async def quick_connection_test():
                 return True
             else:
                 print("❌ No suitable Llama model found.")
-                print("💡 Try: ollama pull llama3.1:8b")
+                print("💡 Try: ollama pull qwen3:8b")
                 return False
         else:
             print("❌ Cannot connect to Ollama")
@@ -934,7 +934,7 @@ async def main():
         # Initialize workflow orchestrator
         workflow = WorkflowOrchestrator(
             ollama_host="http://localhost:11434",
-            model_name="llama3.1:8b"
+            model_name="qwen3:8b"
         )
         
         # Analyze Colombo
@@ -975,7 +975,7 @@ async def main():
         
     except ValueError as e:
         print(f"\n🤖 Model Error: {e}")
-        print("   💡 Download model: ollama pull llama3.1:8b")
+        print("   💡 Download model: ollama pull qwen3:8b")
         
     except Exception as e:
         print(f"\n💥 System Error: {e}")
@@ -1001,8 +1001,8 @@ QUICK SETUP GUIDE:
    - Verify at http://localhost:11434
 
 3. DOWNLOAD AI MODEL:
-   - Run: ollama pull llama3.1:8b
-   - Alternative: ollama pull llama3:8b
+   - Run: ollama pull qwen3:8b
+   - Alternative: ollama pull qwen3:8b
    - Wait for download to complete
 
 4. INSTALL PYTHON DEPENDENCIES:
@@ -1042,7 +1042,7 @@ FIXES APPLIED:
 TROUBLESHOOTING:
 ===============
 - Connection fails → Check 'ollama serve' is running
-- Model not found → Try 'ollama pull llama3.1:8b'
+- Model not found → Try 'ollama pull qwen3:8b'
 - Timeout errors → Model needs more time, increase timeout
 - JSON errors → Fallback data provided automatically
 - Port issues → Check firewall/antivirus blocking port 11434
